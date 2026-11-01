@@ -23,3 +23,6 @@ jobs:
 
       - name: Build JP
         run: dotnet build src/options.csproj -c Release -p:Locale=ja
+
+      - name: Build EN
+        run: dotnet build src/options.csproj -c Release -p:Locale=en
