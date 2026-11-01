@@ -36,7 +36,8 @@ dotnet publish src/options.csproj \
   -p:AssemblyName="BLACK SOULS EN options" \
   -o "$stage/en"
 
-cp "$stage/cn/BLACK SOULS CN options.exe" release/
-cp "$stage/jp/BLACK SOULS JP options.exe" release/
-cp "$stage/en/BLACK SOULS EN options.exe" release/
+rm -f release/*.exe
+cp "$stage/cn/BLACK SOULS CN options.exe" release/BLACK-SOULS-CN-options.exe
+cp "$stage/jp/BLACK SOULS JP options.exe" release/BLACK-SOULS-JP-options.exe
+cp "$stage/en/BLACK SOULS EN options.exe" release/BLACK-SOULS-EN-options.exe
 rm -f release/*.pdb
