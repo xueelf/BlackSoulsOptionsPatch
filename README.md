@@ -1,2 +1,5 @@
 # BlackSoulsOptionsPatch
-Unofficial options patch for BLACK SOULS. Adds window resolution, fullscreen, and separate BGM, BGS, ME, and SE volume controls. Includes CN and JP installers.
+
+An unofficial patch for the game [BLACK SOULS](https://www.dlsite.com/maniax/work/=/product_id/RJ251629.html), which adds an in-game Settings screen. You can change the window resolution and fullscreen mode, and adjust the volume of BGM, BGS, ME, and SE independently.
+
+Read this in other languages: English | [简体中文](./README.zh.md)
