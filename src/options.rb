@@ -32,7 +32,6 @@ module BSOPTS
   @work_area = nil
   @window_handle = 0
   @fullscreen_saved = nil
-  @background = nil
 
   #--------------------------------------------------------------------------
   # Win32 helpers
@@ -62,14 +61,17 @@ module BSOPTS
 
     def load_config
       cfg = DEFAULTS.dup
+
       begin
         if File.exist?(config_path)
           File.open(config_path, "rb") do |file|
             file.each_line do |line|
               line = line.strip
               next if line.empty? || line[0, 1] == "#"
+
               key, value = line.split("=", 2)
               next if key.nil? || value.nil?
+
               case key.strip
               when "resolution"
                 cfg[:resolution] = value.strip
@@ -89,6 +91,7 @@ module BSOPTS
         end
       rescue
       end
+
       cfg[:resolution] = "640x480" unless RESOLUTIONS.include?(cfg[:resolution])
       cfg
     end
@@ -129,6 +132,7 @@ module BSOPTS
     #------------------------------------------------------------------------
     def work_area
       return @work_area if @work_area
+
       begin
         buffer = [0, 0, 0, 0].pack("l4")
         if BSWin32::SYSTEM_PARAMETERS_INFO.call(SPI_GETWORKAREA, 0, buffer, 0) != 0
@@ -140,6 +144,7 @@ module BSOPTS
       rescue
         @work_area = [0, 0, 0, 0]
       end
+
       @work_area
     end
 
@@ -165,6 +170,7 @@ module BSOPTS
       old_value = config[key]
       new_value = clamp_volume(old_value + delta)
       return false if new_value == old_value
+
       config[key] = new_value
       save_config
       Audio.bs_options_replay_bgm if key == :bgm
@@ -185,12 +191,15 @@ module BSOPTS
     #------------------------------------------------------------------------
     def process_window?(handle)
       return false if handle == 0
+
       buffer = [0].pack("L")
       BSWin32::GET_WINDOW_THREAD_PROCESS_ID.call(handle, buffer)
       pid = buffer.unpack("L")[0]
       return false if pid != BSWin32::GET_CURRENT_PROCESS_ID.call
-      name = "\0" * 64
-      length = BSWin32::GET_CLASS_NAME.call(handle, name, 64)
+
+      name = "\0" * 256
+      length = BSWin32::GET_CLASS_NAME.call(handle, name, 256)
+
       name[0, length] == "RGSS Player"
     rescue
       false
@@ -214,6 +223,7 @@ module BSOPTS
         end
         handle = BSWin32::GET_WINDOW.call(handle, GW_HWNDNEXT)
       end
+
       0
     rescue
       0
@@ -222,6 +232,7 @@ module BSOPTS
     def get_rect(api, handle)
       buffer = [0, 0, 0, 0].pack("l4")
       return nil if api.call(handle, buffer) == 0
+
       buffer.unpack("l4")
     rescue
       nil
@@ -232,6 +243,7 @@ module BSOPTS
       window = get_rect(BSWin32::GET_WINDOW_RECT, handle)
       client = get_rect(BSWin32::GET_CLIENT_RECT, handle)
       return false if window.nil? || client.nil?
+
       border_width = (window[2] - window[0]) - client[2]
       border_height = (window[3] - window[1]) - client[3]
       area = work_area
@@ -251,6 +263,7 @@ module BSOPTS
       if @fullscreen_saved.nil?
         rect = get_rect(BSWin32::GET_WINDOW_RECT, handle)
         return false if rect.nil?
+
         style = BSWin32::GET_WINDOW_LONG.call(handle, GWL_STYLE)
         exstyle = BSWin32::GET_WINDOW_LONG.call(handle, GWL_EXSTYLE)
         @fullscreen_saved = [style, exstyle, rect]
@@ -267,6 +280,7 @@ module BSOPTS
 
     def restore_from_fullscreen(handle)
       return true if @fullscreen_saved.nil?
+
       style, exstyle, rect = @fullscreen_saved
       BSWin32::SET_WINDOW_LONG.call(handle, GWL_STYLE, style)
       BSWin32::SET_WINDOW_LONG.call(handle, GWL_EXSTYLE, exstyle)
@@ -282,6 +296,7 @@ module BSOPTS
     def apply_window
       handle = find_window
       return false if handle == 0
+
       if config[:fullscreen]
         apply_fullscreen(handle)
       else
@@ -293,20 +308,25 @@ module BSOPTS
       false
     end
 
-    #------------------------------------------------------------------------
-    # Background snapshot used by the settings scene
-    #------------------------------------------------------------------------
-    def capture_background
-      @background = Graphics.snap_to_bitmap
-    rescue
-      @background = nil
+    def start_settings(font = nil)
+      @settings_font = duplicate_font(font)
+      SceneManager.call(Scene_BSOptions)
     end
 
-    def take_background
-      bitmap = @background
-      @background = nil
-      bitmap
+    def duplicate_font(font)
+      return nil unless font
+
+      copy = Font.new
+      copy.name = font.name
+      copy.size = font.size
+      copy.bold = font.bold
+      copy.italic = font.italic
+      copy.outline = font.outline
+      copy.shadow = font.shadow
+      copy
     end
+
+    attr_reader :settings_font
   end
 end
 
@@ -320,6 +340,7 @@ module Audio
       def bgm_play(filename, volume = 100, pitch = 100, *rest)
         @bs_options_last_bgm = [filename, volume, pitch, rest]
         @bs_options_bgm_playing = true
+
         bs_options_original_bgm_play(filename, BSOPTS.scale_volume(volume, :bgm), pitch, *rest)
       end
     end
@@ -328,6 +349,7 @@ module Audio
       alias_method :bs_options_original_bgm_stop, :bgm_stop
       def bgm_stop
         @bs_options_bgm_playing = false
+
         bs_options_original_bgm_stop
       end
     end
@@ -337,6 +359,7 @@ module Audio
       def bgs_play(filename, volume = 100, pitch = 100, *rest)
         @bs_options_last_bgs = [filename, volume, pitch, rest]
         @bs_options_bgs_playing = true
+
         bs_options_original_bgs_play(filename, BSOPTS.scale_volume(volume, :bgs), pitch, *rest)
       end
     end
@@ -345,6 +368,7 @@ module Audio
       alias_method :bs_options_original_bgs_stop, :bgs_stop
       def bgs_stop
         @bs_options_bgs_playing = false
+
         bs_options_original_bgs_stop
       end
     end
@@ -365,14 +389,18 @@ module Audio
 
     def bs_options_replay_bgm
       return unless @bs_options_bgm_playing && @bs_options_last_bgm
+
       filename, volume, pitch, rest = @bs_options_last_bgm
+
       bs_options_original_bgm_play(filename, BSOPTS.scale_volume(volume, :bgm), pitch, *rest)
     rescue
     end
 
     def bs_options_replay_bgs
       return unless @bs_options_bgs_playing && @bs_options_last_bgs
+
       filename, volume, pitch, rest = @bs_options_last_bgs
+
       bs_options_original_bgs_play(filename, BSOPTS.scale_volume(volume, :bgs), pitch, *rest)
     rescue
     end
@@ -395,8 +423,50 @@ class Window_BSOptions < Window_Command
 
   VOLUME_KEYS = [:bgm, :bgs, :me, :se]
 
+  def initialize(x, y, font = nil)
+    @custom_font = font
+    @layout_ready = false
+
+    super(x, y)
+  end
+
   def window_width
-    super * 2
+    calculate_layout
+
+    width = [super * 2, @window_width].max
+    if width != @window_width
+      @window_width = width
+      contents_width = width - standard_padding * 2
+      @value_width = contents_width - 4 - @label_width - 8
+    end
+
+    width
+  end
+
+  def calculate_layout
+    return if @layout_ready
+
+    bitmap = Bitmap.new(1, 1)
+    if @custom_font
+      bitmap.font = @custom_font
+    else
+      bitmap.font.name = Font.default_name
+      bitmap.font.size = Font.default_size
+    end
+
+    labels = @list.map { |item| item[:name].to_s }
+    values = BSOPTS::RESOLUTIONS.map { |resolution| resolution.sub("x", " x ") }
+    values << BSOPTS::TEXT["options.display.mode.fullscreen"]
+    values << BSOPTS::TEXT["options.display.mode.window"]
+    values << "100%"
+
+    @label_width = labels.map { |text| bitmap.text_size(text).width }.max.to_i + 4
+    @value_width = values.map { |text| bitmap.text_size(text).width }.max.to_i + 4
+
+    bitmap.dispose
+
+    @window_width = standard_padding * 2 + 4 + @label_width + 8 + @value_width
+    @layout_ready = true
   end
 
   def make_command_list
@@ -411,12 +481,14 @@ class Window_BSOptions < Window_Command
 
   def draw_item(index)
     rect = item_rect(index)
-    label_width = 150
+
     change_color(normal_color)
-    draw_text(rect.x + 4, rect.y, label_width, line_height, command_name(index))
-    draw_text(rect.x + 4 + label_width, rect.y,
-              rect.width - label_width - 8, line_height,
-              value_text(index), 2)
+    contents.font = @custom_font if @custom_font
+    draw_text(rect.x + 4, rect.y, @label_width, line_height, command_name(index))
+
+    contents.font = @custom_font if @custom_font
+    draw_text(rect.x + 4 + @label_width + 8, rect.y,
+              @value_width, line_height, value_text(index), 2)
   end
 
   def value_text(index)
@@ -434,9 +506,11 @@ class Window_BSOptions < Window_Command
 
   def process_cursor_move
     return unless cursor_movable?
+
     last_index = @index
-    cursor_down if Input.repeat?(:DOWN)
-    cursor_up if Input.repeat?(:UP)
+    cursor_down(true) if Input.repeat?(:DOWN)
+    cursor_up(true) if Input.repeat?(:UP)
+
     if @index <= 1
       adjust_value(1) if Input.trigger?(:RIGHT)
       adjust_value(-1) if Input.trigger?(:LEFT)
@@ -444,6 +518,7 @@ class Window_BSOptions < Window_Command
       adjust_value(1) if Input.repeat?(:RIGHT)
       adjust_value(-1) if Input.repeat?(:LEFT)
     end
+
     Sound.play_cursor if @index != last_index
   end
 
@@ -457,11 +532,6 @@ class Window_BSOptions < Window_Command
     end
   end
 
-  def process_cancel
-    Sound.play_cancel
-    SceneManager.return
-  end
-
   def adjust_value(direction)
     case @index
     when 0
@@ -472,6 +542,8 @@ class Window_BSOptions < Window_Command
       Sound.play_cursor
     when 2..5
       Sound.play_cursor if BSOPTS.change_volume(VOLUME_KEYS[@index - 2], direction * 5)
+    else
+      return
     end
     refresh
   end
@@ -484,35 +556,46 @@ class Scene_BSOptions < Scene_Base
   def start
     super
     create_background
-    create_windows
+    create_window
   end
 
   def create_background
-    bitmap = BSOPTS.take_background
-    if bitmap.nil?
-      bitmap = Bitmap.new(Graphics.width, Graphics.height)
-      bitmap.fill_rect(bitmap.rect, Color.new(0, 0, 0))
+    @background_bitmap = SceneManager.background_bitmap
+    unless @background_bitmap
+      @background_bitmap = Bitmap.new(Graphics.width, Graphics.height)
+      @background_bitmap.fill_rect(@background_bitmap.rect, Color.new(0, 0, 0))
+      @owns_background_bitmap = true
     end
+
     @background_sprite = Sprite.new
-    @background_sprite.bitmap = bitmap
-    @background_sprite.color.set(0, 0, 0, 128)
-    @background_sprite.z = 0
+    @background_sprite.bitmap = @background_bitmap
+    @background_sprite.color.set(16, 16, 16, 128)
   end
 
-  def create_windows
-    @window = Window_BSOptions.new(0, 0)
+  def create_window
+    @window = Window_BSOptions.new(0, 0, BSOPTS.settings_font)
     @window.x = (Graphics.width - @window.width) / 2
     @window.y = (Graphics.height - @window.height) / 2
+    @window.set_handler(:cancel, method(:return_scene))
+    @window.activate
   end
 
   def terminate
-    if @background_sprite
-      if @background_sprite.bitmap && !@background_sprite.bitmap.disposed?
-        @background_sprite.bitmap.dispose
-      end
-      @background_sprite.dispose
-    end
     super
+    dispose_background
+  end
+
+  def dispose_background
+    if @background_sprite
+      @background_sprite.dispose
+      @background_sprite = nil
+    end
+
+    if @owns_background_bitmap && @background_bitmap && !@background_bitmap.disposed?
+      @background_bitmap.dispose
+    end
+
+    @background_bitmap = nil
   end
 end
 
@@ -524,6 +607,7 @@ unless Window_TitleCommand.method_defined?(:bs_options_make_command_list)
     alias_method :bs_options_make_command_list, :make_command_list
     def make_command_list
       bs_options_make_command_list
+
       @list.insert(@list.size - 1,
                    {:name => BSOPTS::TEXT["options.label"], :symbol => :bs_options,
                     :enabled => true, :ext => nil})
@@ -533,8 +617,9 @@ end
 
 class Scene_Base
   def command_bs_options
-    BSOPTS.capture_background
-    SceneManager.call(Scene_BSOptions)
+    font = @command_window.contents.font if @command_window
+
+    BSOPTS.start_settings(font)
   end
 end
 
@@ -543,6 +628,7 @@ unless Scene_Title.method_defined?(:bs_options_create_command_window)
     alias_method :bs_options_create_command_window, :create_command_window
     def create_command_window
       bs_options_create_command_window
+
       @command_window.set_handler(:bs_options, method(:command_bs_options))
     end
   end
@@ -553,8 +639,10 @@ unless Window_MenuCommand.method_defined?(:bs_options_make_command_list)
     alias_method :bs_options_make_command_list, :make_command_list
     def make_command_list
       bs_options_make_command_list
+
       index = @list.index { |item| item[:symbol] == :save }
       index = @list.size if index.nil?
+
       @list.insert(index,
                    {:name => BSOPTS::TEXT["options.label"], :symbol => :bs_options,
                     :enabled => true, :ext => nil})
@@ -567,6 +655,7 @@ unless Scene_Menu.method_defined?(:bs_options_create_command_window)
     alias_method :bs_options_create_command_window, :create_command_window
     def create_command_window
       bs_options_create_command_window
+
       @command_window.set_handler(:bs_options, method(:command_bs_options))
     end
   end
@@ -580,6 +669,7 @@ unless Scene_Title.method_defined?(:bs_options_start)
     alias_method :bs_options_start, :start
     def start
       bs_options_start
+
       BSOPTS.apply_window
     end
   end
