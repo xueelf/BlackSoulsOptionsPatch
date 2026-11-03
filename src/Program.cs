@@ -11,9 +11,18 @@ internal static class Program
     private const string ScriptTitle = "BLACK SOULS options";
     private const string BackupSuffix = ".bsopts.bak";
     private const string TempSuffix = ".bsopts.tmp";
-    private const string Version = "1.0";
+    private static readonly string Version = GetVersion();
 
     private static readonly Dictionary<string, string> _text = new();
+
+    private static string GetVersion()
+    {
+        var attribute = Assembly.GetExecutingAssembly()
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>();
+        string? version = attribute?.InformationalVersion;
+
+        return string.IsNullOrEmpty(version) ? "unknown" : version.Split('+')[0];
+    }
 
     private static string T(string key)
     {
