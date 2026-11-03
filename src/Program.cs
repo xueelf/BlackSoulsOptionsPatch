@@ -30,8 +30,10 @@ internal static class Program
         var assembly = Assembly.GetExecutingAssembly();
         string resource = assembly.GetManifestResourceNames()
             .First(name => name.EndsWith("locale.json", StringComparison.OrdinalIgnoreCase));
+
         using Stream stream = assembly.GetManifestResourceStream(resource)!;
         using var document = JsonDocument.Parse(stream);
+
         foreach (JsonProperty property in document.RootElement.EnumerateObject())
         {
             _text[property.Name] = property.Value.GetString()!;
@@ -41,6 +43,7 @@ internal static class Program
     private static int Main()
     {
         Console.OutputEncoding = Encoding.UTF8;
+
         try
         {
             LoadLocale();
@@ -62,6 +65,7 @@ internal static class Program
         string gameDir = AppContext.BaseDirectory;
         string archivePath = Path.Combine(gameDir, "Game.rgss3a");
         string gameExePath = Path.Combine(gameDir, "Game.exe");
+
         if (!File.Exists(gameExePath) || !File.Exists(archivePath))
         {
             Error(T("check.root"));
@@ -76,6 +80,7 @@ internal static class Program
         }
 
         string backupPath = archivePath + BackupSuffix;
+
         while (true)
         {
             Console.WriteLine(TF("terminal.status.dir", gameDir));
@@ -93,6 +98,7 @@ internal static class Program
             {
                 return 0;
             }
+
             if (choice != "1" && choice != "2")
             {
                 Console.WriteLine(T("terminal.prompt.invalid"));
@@ -139,6 +145,7 @@ internal static class Program
         }
 
         char choice = Console.ReadKey(true).KeyChar;
+
         Console.WriteLine(choice);
         return choice.ToString();
     }
@@ -170,8 +177,8 @@ internal static class Program
     private static void Install(string archivePath, string backupPath)
     {
         Info(T("install.reading"));
-        var archive = Rgss3aArchive.Read(archivePath);
 
+        var archive = Rgss3aArchive.Read(archivePath);
         var scriptsEntry = archive.Entries.FirstOrDefault(e =>
             string.Equals(NormalizeName(e.Name), "Data/Scripts.rvdata2", StringComparison.OrdinalIgnoreCase));
         if (scriptsEntry == null)
@@ -212,6 +219,7 @@ internal static class Program
         }
 
         byte[] scriptCode = LoadScript();
+
         byte[] newScripts = ScriptsFile.Build(
             scriptsData, scripts, replaceIndex, insertIndex, newId, ScriptTitle, scriptCode);
 
@@ -236,6 +244,7 @@ internal static class Program
         File.Delete(tempPath);
 
         Info(T("install.repack"));
+
         Rgss3aArchive.Replace(archivePath, tempPath, archive, scriptsEntry, newScripts);
 
         // Verify the new archive itself.
@@ -286,8 +295,10 @@ internal static class Program
 
         File.Copy(backupPath, archivePath, overwrite: true);
         File.Delete(backupPath);
+
         string optionsPath = Path.Combine(Path.GetDirectoryName(archivePath)!, "Options.ini");
         File.Delete(optionsPath);
+
         Success(T("uninstall.done"));
     }
 
@@ -296,6 +307,7 @@ internal static class Program
         var assembly = Assembly.GetExecutingAssembly();
         string resource = assembly.GetManifestResourceNames()
             .First(name => name.EndsWith("options.rb", StringComparison.OrdinalIgnoreCase));
+
         using Stream stream = assembly.GetManifestResourceStream(resource)!;
         using var memory = new MemoryStream();
         stream.CopyTo(memory);
@@ -308,6 +320,7 @@ internal static class Program
 
         string code = Encoding.UTF8.GetString(data);
         var builder = new StringBuilder();
+
         builder.AppendLine("module BSOPTS");
         builder.AppendLine("  TEXT = {");
         foreach (var pair in _text.Where(pair => pair.Key.StartsWith("options.", StringComparison.Ordinal)))
@@ -370,6 +383,7 @@ internal static class Program
                 // Access denied or process exited; ignore.
             }
         }
+
         return false;
     }
 
@@ -488,6 +502,7 @@ internal sealed class Rgss3aArchive
             {
                 return false;
             }
+
             return header[0] == (byte)'R' && header[1] == (byte)'G' && header[2] == (byte)'S' &&
                    header[3] == (byte)'S' && header[4] == (byte)'A' && header[5] == (byte)'D' &&
                    header[6] == 0 && header[7] == 3;
@@ -502,8 +517,10 @@ internal sealed class Rgss3aArchive
     {
         using var stream = File.OpenRead(archivePath);
         stream.Position = entry.OriginalOffset;
+
         byte[] encrypted = new byte[entry.Size];
         int read = 0;
+
         while (read < encrypted.Length)
         {
             int n = stream.Read(encrypted, read, encrypted.Length - read);
@@ -513,6 +530,7 @@ internal sealed class Rgss3aArchive
             }
             read += n;
         }
+
         return XorPayload(encrypted, entry.Key);
     }
 
@@ -536,7 +554,11 @@ internal sealed class Rgss3aArchive
         long offset = tocSize;
         foreach (var entry in archive.Entries)
         {
-            entry.Offset = checked((uint)offset);
+            if (offset > uint.MaxValue)
+            {
+                throw new InvalidOperationException("Archive exceeds 4 GiB; RGSS3A cannot address it.");
+            }
+            entry.Offset = (uint)offset;
             offset += entry.Size;
         }
 
@@ -601,6 +623,7 @@ internal sealed class Rgss3aArchive
         Span<byte> bytes = stackalloc byte[4];
         Random.Shared.NextBytes(bytes);
         uint key = BitConverter.ToUInt32(bytes);
+
         return key == 0 ? 0x12345678u : key;
     }
 
@@ -608,6 +631,7 @@ internal sealed class Rgss3aArchive
     {
         var result = new byte[data.Length];
         int index = 0;
+
         while (index < data.Length)
         {
             int count = Math.Min(4, data.Length - index);
@@ -621,6 +645,7 @@ internal sealed class Rgss3aArchive
                 key = unchecked(key * 7 + 3);
             }
         }
+
         return result;
     }
 
@@ -660,6 +685,7 @@ internal sealed class ScriptsFile
     public static ScriptsFile Read(byte[] data)
     {
         var reader = new MarshalReader(data);
+
         if (reader.ReadByte() != 0x04 || reader.ReadByte() != 0x08 || reader.ReadByte() != (byte)'[')
         {
             throw new InvalidDataException("Not a Ruby Marshal array (Scripts.rvdata2).");
@@ -711,6 +737,7 @@ internal sealed class ScriptsFile
         byte[] codeUtf8)
     {
         byte[] compressed = Compress(codeUtf8);
+
         var newEntry = new List<object?>
         {
             newId,
@@ -721,6 +748,7 @@ internal sealed class ScriptsFile
 
         int count = scripts.Entries.Count + (replaceIndex < 0 ? 1 : 0);
         using var output = new MemoryStream();
+
         output.WriteByte(0x04);
         output.WriteByte(0x08);
         output.WriteByte((byte)'[');
@@ -753,10 +781,12 @@ internal sealed class ScriptsFile
     private static byte[] Compress(byte[] data)
     {
         using var output = new MemoryStream();
+
         using (var zlib = new ZLibStream(output, CompressionLevel.Optimal, leaveOpen: true))
         {
             zlib.Write(data, 0, data.Length);
         }
+
         return output.ToArray();
     }
 }
@@ -768,6 +798,7 @@ internal sealed record Utf8String(byte[] Bytes);
 internal sealed class MarshalReader
 {
     private readonly byte[] _data;
+    private readonly List<string> _symbols = new();
     public int Position { get; private set; }
 
     public MarshalReader(byte[] data)
@@ -781,6 +812,7 @@ internal sealed class MarshalReader
         {
             throw new EndOfStreamException("Unexpected end of Marshal data.");
         }
+
         return _data[Position++];
     }
 
@@ -790,47 +822,57 @@ internal sealed class MarshalReader
         {
             throw new EndOfStreamException("Unexpected end of Marshal data.");
         }
+
         byte[] result = new byte[count];
         Buffer.BlockCopy(_data, Position, result, 0, count);
         Position += count;
+
         return result;
     }
 
     public int ReadFixnum()
     {
         sbyte first = unchecked((sbyte)ReadByte());
+
         if (first == 0)
         {
             return 0;
         }
+
         if (first > 0 && first < 5)
         {
             return ReadLittleEndian(first);
         }
+
         if (first < 0 && first > -5)
         {
             return ~ReadLittleEndian(-first);
         }
+
         if (first > 4)
         {
             return first - 5;
         }
+
         return first + 5;
     }
 
     private int ReadLittleEndian(int count)
     {
         int value = 0;
+
         for (int i = 0; i < count; i++)
         {
             value |= ReadByte() << (8 * i);
         }
+
         return value;
     }
 
     public object? ReadValue()
     {
         byte type = ReadByte();
+
         switch ((char)type)
         {
             case '0':
@@ -846,8 +888,12 @@ internal sealed class MarshalReader
             case ':':
                 return ReadSymbol();
             case ';':
-                ReadFixnum();
-                return new Symbol("");
+                int symbolIndex = ReadFixnum();
+                if (symbolIndex < 0 || symbolIndex >= _symbols.Count)
+                {
+                    throw new InvalidDataException($"Invalid Marshal symbol link index: {symbolIndex}");
+                }
+                return new Symbol(_symbols[symbolIndex]);
             case '[':
                 return ReadArray();
             case 'I':
@@ -861,17 +907,23 @@ internal sealed class MarshalReader
     {
         int length = ReadFixnum();
         byte[] name = ReadBytes(length);
-        return new Symbol(Encoding.UTF8.GetString(name));
+        string symbol = Encoding.UTF8.GetString(name);
+
+        _symbols.Add(symbol);
+
+        return new Symbol(symbol);
     }
 
     private List<object?> ReadArray()
     {
         int count = ReadFixnum();
         var result = new List<object?>(count);
+
         for (int i = 0; i < count; i++)
         {
             result.Add(ReadValue());
         }
+
         return result;
     }
 
@@ -879,17 +931,20 @@ internal sealed class MarshalReader
     {
         object? value = ReadValue();
         int ivarCount = ReadFixnum();
+
         for (int i = 0; i < ivarCount; i++)
         {
             ReadValue();
             ReadValue();
         }
+
         return value ?? throw new InvalidDataException("I wrapper is empty.");
     }
 
     private byte[] ReadStringBody()
     {
         int length = ReadFixnum();
+
         return ReadBytes(length);
     }
 }
@@ -902,18 +957,22 @@ internal static class MarshalWriter
         {
             return new byte[] { 0 };
         }
+
         if (value > 0)
         {
             if (value < 123)
             {
                 return new[] { (byte)(value + 5) };
             }
+
             return EncodeLittleEndian(value, false);
         }
+
         if (value > -124)
         {
             return new[] { unchecked((byte)(value - 5)) };
         }
+
         return EncodeLittleEndian(value, true);
     }
 
@@ -921,23 +980,29 @@ internal static class MarshalWriter
     {
         uint bits = negative ? (uint)~value : (uint)value;
         int length = 1;
+
         while (length < 4 && (bits >> (8 * length)) != 0)
         {
             length++;
         }
+
         var result = new byte[1 + length];
         result[0] = unchecked((byte)(negative ? -length : length));
+
         for (int i = 0; i < length; i++)
         {
             result[1 + i] = (byte)(bits >> (8 * i));
         }
+
         return result;
     }
 
     public static byte[] Serialize(object? value)
     {
         using var stream = new MemoryStream();
+
         Write(stream, value);
+
         return stream.ToArray();
     }
 
@@ -951,40 +1016,50 @@ internal static class MarshalWriter
             case bool b:
                 stream.WriteByte((byte)(b ? 'T' : 'F'));
                 break;
+
             case int i:
                 stream.WriteByte((byte)'i');
                 stream.Write(EncodeFixnum(i));
                 break;
+
             case byte[] bytes:
                 stream.WriteByte((byte)'"');
                 stream.Write(EncodeFixnum(bytes.Length));
                 stream.Write(bytes);
                 break;
+
             case Utf8String utf8:
                 stream.WriteByte((byte)'I');
                 stream.WriteByte((byte)'"');
                 stream.Write(EncodeFixnum(utf8.Bytes.Length));
                 stream.Write(utf8.Bytes);
+
+                // Marshal fixnum 1: one instance variable (:E => true).
                 stream.WriteByte(6);
                 stream.WriteByte((byte)':');
                 stream.Write(EncodeFixnum(1));
                 stream.WriteByte((byte)'E');
                 stream.WriteByte((byte)'T');
                 break;
+
             case Symbol symbol:
                 stream.WriteByte((byte)':');
                 byte[] name = Encoding.UTF8.GetBytes(symbol.Name);
                 stream.Write(EncodeFixnum(name.Length));
                 stream.Write(name);
                 break;
+
             case List<object?> list:
                 stream.WriteByte((byte)'[');
                 stream.Write(EncodeFixnum(list.Count));
+
                 foreach (object? item in list)
                 {
                     Write(stream, item);
                 }
+
                 break;
+
             default:
                 throw new NotSupportedException($"Cannot serialize {value.GetType()}.");
         }
