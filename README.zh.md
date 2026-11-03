@@ -34,7 +34,7 @@
 
 安装时会将游戏原版 `Game.rgss3a` 备份为 `Game.rgss3a.bsopts.bak`。卸载会恢复原版，并删除备份和 `Options.ini`。
 
-安装完成后启动游戏，在标题画面或暂停菜单里选择「设置」。如果 exe 不在游戏目录，或缺少 `Game.exe`、`Game.rgss3a`，程序会提示后按任意键退出。
+如果 exe 不处于游戏目录内，或缺少 `Game.exe`、`Game.rgss3a` 文件，程序会提示错误信息。
 
 ## 声明
 

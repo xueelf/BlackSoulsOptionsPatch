@@ -34,7 +34,7 @@ Download the exe for your language from [GitHub Releases](https://github.com/xue
 
 During installation the original `Game.rgss3a` is backed up as `Game.rgss3a.bsopts.bak`. Uninstalling restores the original, and deletes the backup and `Options.ini`.
 
-After installation, start the game and select “Settings” from the title screen or pause menu. If the exe is not in the game directory, or `Game.exe` or `Game.rgss3a` is missing, the program will show a message and wait for a key before exiting.
+If the exe is not in the game directory, or `Game.exe` or `Game.rgss3a` is missing, the program will show an error message.
 
 ## Notice
 
