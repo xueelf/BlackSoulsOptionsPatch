@@ -475,18 +475,12 @@ class Window_BSOptions < Window_Command
     end
   end
 
-  def cancel_enabled?
-    true
-  end
-
   def draw_item(index)
     rect = item_rect(index)
 
+    contents.font = @custom_font if @custom_font
     change_color(normal_color)
-    contents.font = @custom_font if @custom_font
     draw_text(rect.x + 4, rect.y, @label_width, line_height, command_name(index))
-
-    contents.font = @custom_font if @custom_font
     draw_text(rect.x + 4 + @label_width + 8, rect.y,
               @value_width, line_height, value_text(index), 2)
   end
@@ -577,7 +571,6 @@ class Scene_BSOptions < Scene_Base
     @window.x = (Graphics.width - @window.width) / 2
     @window.y = (Graphics.height - @window.height) / 2
     @window.set_handler(:cancel, method(:return_scene))
-    @window.activate
   end
 
   def terminate
