@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Globalization;
 using System.IO.Compression;
 using System.Reflection;
 using System.Text;
@@ -212,7 +213,7 @@ internal static class Program
 
         int replaceIndex = -1;
         int insertIndex = -1;
-        int newId;
+        ScriptId newId;
 
         if (existingIndex >= 0)
         {
@@ -223,7 +224,7 @@ internal static class Program
         else
         {
             insertIndex = mainIndex;
-            newId = scripts.Entries.Max(e => e.Id) + 1;
+            newId = scripts.CreateNewId();
             Info(T("install.add"));
         }
 
@@ -678,9 +679,22 @@ internal sealed class Rgss3aArchive
 //==============================================================================
 // Ruby Marshal helpers for Scripts.rvdata2
 //==============================================================================
+internal readonly record struct ScriptId(bool IsString, long Number)
+{
+    public object ToMarshalValue()
+    {
+        if (IsString)
+        {
+            return new Utf8String(Encoding.UTF8.GetBytes(Number.ToString(CultureInfo.InvariantCulture)));
+        }
+
+        return checked((int)Number);
+    }
+}
+
 internal sealed class ScriptEntry
 {
-    public int Id;
+    public ScriptId Id;
     public string Title = "";
     public byte[] Compressed = Array.Empty<byte>();
     public int RawStart;
@@ -713,14 +727,14 @@ internal sealed class ScriptsFile
             {
                 throw new InvalidDataException($"Script entry {i} is not a 3-element array.");
             }
-            if (item[0] is not int id || item[1] is not byte[] titleBytes || item[2] is not byte[] compressed)
+            if (item[1] is not byte[] titleBytes || item[2] is not byte[] compressed)
             {
-                throw new InvalidDataException($"Script entry {i} has invalid types.");
+                throw new InvalidDataException($"Script entry {i} has invalid title or code type.");
             }
 
             result.Entries.Add(new ScriptEntry
             {
-                Id = id,
+                Id = ParseId(item[0], i),
                 Title = Encoding.UTF8.GetString(titleBytes),
                 Compressed = compressed,
                 RawStart = start,
@@ -736,12 +750,56 @@ internal sealed class ScriptsFile
         return result;
     }
 
+    private static ScriptId ParseId(object? value, int index)
+    {
+        return value switch
+        {
+            int number => new ScriptId(false, number),
+            byte[] bytes => ParseStringId(bytes, index),
+            _ => throw new InvalidDataException(
+                $"Script entry {index} has unsupported ID type: {value?.GetType().Name ?? "null"}"),
+        };
+    }
+
+    private static ScriptId ParseStringId(byte[] bytes, int index)
+    {
+        string text = Encoding.UTF8.GetString(bytes);
+        if (!long.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out long number))
+        {
+            throw new InvalidDataException($"Script entry {index} has a non-numeric string ID: {text}");
+        }
+
+        return new ScriptId(true, number);
+    }
+
+    public ScriptId CreateNewId()
+    {
+        if (Entries.Count == 0)
+        {
+            return new ScriptId(false, 1);
+        }
+
+        bool isString = Entries[0].Id.IsString;
+        if (Entries.Any(e => e.Id.IsString != isString))
+        {
+            throw new InvalidDataException("Scripts.rvdata2 mixes integer and string script IDs.");
+        }
+
+        long max = Entries.Max(e => e.Id.Number);
+        if (max == long.MaxValue || (!isString && max >= int.MaxValue))
+        {
+            throw new InvalidDataException("Script ID space exhausted.");
+        }
+
+        return new ScriptId(isString, max + 1);
+    }
+
     public static byte[] Build(
         byte[] original,
         ScriptsFile scripts,
         int replaceIndex,
         int insertIndex,
-        int newId,
+        ScriptId newId,
         string title,
         byte[] codeUtf8)
     {
@@ -749,7 +807,7 @@ internal sealed class ScriptsFile
 
         var newEntry = new List<object?>
         {
-            newId,
+            newId.ToMarshalValue(),
             new Utf8String(Encoding.UTF8.GetBytes(title)),
             new Utf8String(compressed),
         };
