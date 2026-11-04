@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   release:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -21,9 +21,11 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: Build
+        shell: bash
         run: bash scripts/build.sh
 
       - name: Create release
+        shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -31,4 +33,7 @@ jobs:
             --generate-notes \
             "release/BLACK-SOULS-CN-options.exe" \
             "release/BLACK-SOULS-JP-options.exe" \
-            "release/BLACK-SOULS-EN-options.exe"
+            "release/BLACK-SOULS-EN-options.exe" \
+            "release/BLACK-SOULS-II-CN-options.exe" \
+            "release/BLACK-SOULS-II-JP-options.exe" \
+            "release/BLACK-SOULS-II-EN-options.exe"
