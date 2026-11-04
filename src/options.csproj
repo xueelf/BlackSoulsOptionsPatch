@@ -8,7 +8,8 @@
     <GameGeneration Condition="'$(GameGeneration)' == ''">1</GameGeneration>
     <GameLocaleDir Condition="'$(GameGeneration)' == '1'">BlackSouls</GameLocaleDir>
     <GameLocaleDir Condition="'$(GameGeneration)' == '2'">BlackSoulsII</GameLocaleDir>
-    <ApplicationIcon>app.ico</ApplicationIcon>
+    <ApplicationIcon Condition="'$(GameGeneration)' == '1'">..\artifacts\icons\BlackSouls.ico</ApplicationIcon>
+    <ApplicationIcon Condition="'$(GameGeneration)' == '2'">..\artifacts\icons\BlackSoulsII.ico</ApplicationIcon>
     <RootNamespace>OptionsPatch</RootNamespace>
     <Locale Condition="'$(Locale)' == ''">zh</Locale>
     <BuildDate>$([System.DateTime]::Now.ToString("yyyy.MM.dd"))</BuildDate>
