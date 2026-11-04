@@ -1,12 +1,12 @@
 # BlackSoulsOptionsPatch
 
-ゲーム [BLACK SOULS](https://www.dlsite.com/maniax/work/=/product_id/RJ203687.html) と [BLACK SOULS II](https://www.dlsite.com/maniax/work/=/product_id/RJ237469.html) の非公式の最適化パッチで、プログラム内に「設定」画面を追加します。ウィンドウサイズと全画面表示を変更でき、BGM、BGS、ME、SE の音量を個別に調整できます。
+ゲーム [BLACK SOULS](https://www.dlsite.com/maniax/work/=/product_id/RJ203687.html) と [BLACK SOULS II](https://www.dlsite.com/maniax/work/=/product_id/RJ237469.html) の非公式の最適化パッチで、プログラム内に設定画面を追加します。ウィンドウサイズと全画面表示を変更でき、BGM、BGS、ME、SE の音量を個別に調整できます。
 
 他の言語で読む：[English](./README.md) | [中文](./README.zh.md) | 日本語
 
 ## 機能
 
-- 設定画面：タイトル画面に「OPTIONS」、ポーズメニューに「設定」の項目を追加します。
+- 設定画面：タイトル画面に「OPTIONS」、ポーズメニューに「オプション」の項目を追加します。
 - ウィンドウサイズ：640×480、1280×960、1920×1440、2560×1920 の 4 種類に対応します。
 - ボーダーレス全画面：全画面ではゲーム本来の 4:3 画面を画面比率に合わせて引き伸ばします。
 - 音量調整：BGM、BGS、ME、SE の音量を個別に調整できます。
