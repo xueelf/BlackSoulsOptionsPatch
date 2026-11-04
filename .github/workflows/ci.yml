@@ -8,7 +8,28 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        include:
+          - name: BlackSouls CN
+            gameGeneration: 1
+            locale: zh
+          - name: BlackSouls JP
+            gameGeneration: 1
+            locale: ja
+          - name: BlackSouls EN
+            gameGeneration: 1
+            locale: en
+          - name: BlackSoulsII CN
+            gameGeneration: 2
+            locale: zh
+          - name: BlackSoulsII JP
+            gameGeneration: 2
+            locale: ja
+          - name: BlackSoulsII EN
+            gameGeneration: 2
+            locale: en
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -18,11 +39,5 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Build CN
-        run: dotnet build src/options.csproj -c Release -p:Locale=zh
-
-      - name: Build JP
-        run: dotnet build src/options.csproj -c Release -p:Locale=ja
-
-      - name: Build EN
-        run: dotnet build src/options.csproj -c Release -p:Locale=en
+      - name: Build ${{ matrix.name }}
+        run: dotnet build src/options.csproj -c Release -p:GameGeneration=${{ matrix.gameGeneration }} -p:Locale=${{ matrix.locale }}
