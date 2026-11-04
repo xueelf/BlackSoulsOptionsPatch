@@ -1,6 +1,6 @@
 # BlackSoulsOptionsPatch
 
-ゲーム [BLACK SOULS](https://www.dlsite.com/maniax/work/=/product_id/RJ251629.html) の非公式の最適化パッチで、プログラム内に「設定」画面を追加します。ウィンドウサイズと全画面表示を変更でき、BGM、BGS、ME、SE の音量を個別に調整できます。
+ゲーム [BLACK SOULS](https://www.dlsite.com/maniax/work/=/product_id/RJ203687.html) と [BLACK SOULS II](https://www.dlsite.com/maniax/work/=/product_id/RJ237469.html) の非公式の最適化パッチで、プログラム内に「設定」画面を追加します。ウィンドウサイズと全画面表示を変更でき、BGM、BGS、ME、SE の音量を個別に調整できます。
 
 他の言語で読む：[English](./README.md) | [中文](./README.zh.md) | 日本語
 
@@ -14,16 +14,24 @@
 
 ## ダウンロード
 
-[GitHub Releases](https://github.com/xueelf/BlackSoulsOptionsPatch/releases/latest) から使用する言語の exe をダウンロードしてください：
+[GitHub Releases](https://github.com/xueelf/BlackSoulsOptionsPatch/releases/latest) から使用するゲームの exe をダウンロードしてください：
+
+BLACK SOULS：
 
 - 中国語：`BLACK-SOULS-CN-options.exe`
 - 日本語：`BLACK-SOULS-JP-options.exe`
 - 英語：`BLACK-SOULS-EN-options.exe`
 
+BLACK SOULS II：
+
+- 中国語：`BLACK-SOULS-II-CN-options.exe`
+- 日本語：`BLACK-SOULS-II-JP-options.exe`
+- 英語：`BLACK-SOULS-II-EN-options.exe`
+
 ## 使い方
 
 1. ゲームを終了します。
-2. 使用する言語の exe をゲームディレクトリに置き、`Game.exe`、`Game.rgss3a` と同じ場所にします。
+2. 使用するゲームの exe をゲームディレクトリに置き、`Game.exe`、`Game.rgss3a` と同じ場所にします。
 3. ダウンロードした exe をダブルクリックし、番号を選択します：
 
 ```text
