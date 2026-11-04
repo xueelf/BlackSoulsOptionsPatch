@@ -1,5 +1,6 @@
 {
-  "options.label": "设置",
+  "options.label.title": "设置",
+  "options.label.menu": "设置",
   "options.display.resolution": "窗口大小",
   "options.display.mode": "显示模式",
   "options.display.mode.fullscreen": "全屏",

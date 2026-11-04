@@ -408,7 +408,7 @@ module Audio
 end
 
 #==============================================================================
-# Settings window
+# Options window
 #==============================================================================
 class Window_BSOptions < Window_Command
   COMMAND_KEYS = [
@@ -544,7 +544,7 @@ class Window_BSOptions < Window_Command
 end
 
 #==============================================================================
-# Settings scene
+# Options scene
 #==============================================================================
 class Scene_BSOptions < Scene_Base
   def start
@@ -593,7 +593,7 @@ class Scene_BSOptions < Scene_Base
 end
 
 #==============================================================================
-# Add the settings command to the title screen and the pause menu
+# Add the options command to the title screen and the pause menu
 #==============================================================================
 unless Window_TitleCommand.method_defined?(:bs_options_make_command_list)
   class Window_TitleCommand
@@ -601,8 +601,9 @@ unless Window_TitleCommand.method_defined?(:bs_options_make_command_list)
     def make_command_list
       bs_options_make_command_list
 
+      indent = @list.empty? ? "" : @list.first[:name].to_s[/\A */].to_s
       @list.insert(@list.size - 1,
-                   {:name => BSOPTS::TEXT["options.label"], :symbol => :bs_options,
+                   {:name => indent + BSOPTS::TEXT["options.label.title"], :symbol => :bs_options,
                     :enabled => true, :ext => nil})
     end
   end
@@ -637,7 +638,7 @@ unless Window_MenuCommand.method_defined?(:bs_options_make_command_list)
       index = @list.size if index.nil?
 
       @list.insert(index,
-                   {:name => BSOPTS::TEXT["options.label"], :symbol => :bs_options,
+                   {:name => BSOPTS::TEXT["options.label.menu"], :symbol => :bs_options,
                     :enabled => true, :ext => nil})
     end
   end

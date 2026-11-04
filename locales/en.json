@@ -1,5 +1,6 @@
 {
-  "options.label": "Settings",
+  "options.label.title": "Options",
+  "options.label.menu": "Options",
   "options.display.resolution": "Window size",
   "options.display.mode": "Display mode",
   "options.display.mode.fullscreen": "Fullscreen",
@@ -32,13 +33,13 @@
 
   "install.reading": "Reading the game archive...",
   "install.update": "An installed patch was detected, updating...",
-  "install.add": "Installing the settings script...",
+  "install.add": "Installing the options script...",
   "install.repack": "Repacking Game.rgss3a (about 140 MB)...",
   "install.backup.start": "Backing up the original Game.rgss3a file...",
   "install.backup.saved": "Backup saved: {0}",
   "install.backup.exists": "The original backup already exists, keeping it: {0}",
   "install.done": "Installation complete.",
-  "install.next": "After starting the game, select “Settings” from the title screen or pause menu to open the settings screen.",
+  "install.next": "After starting the game, select “Options” from the title screen or pause menu to open the options screen.",
 
   "uninstall.backup.missing": "Original backup not found: {0}",
   "uninstall.backup.invalid": "The backup is not a valid RGSS3A archive, so the operation was stopped.",

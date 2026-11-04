@@ -1,14 +1,14 @@
 # BlackSoulsOptionsPatch
 
-An unofficial patch for the game [BLACK SOULS](https://www.dlsite.com/maniax/work/=/product_id/RJ251629.html), which adds an in-game Settings screen. You can change the window resolution and fullscreen mode, and adjust the volume of BGM, BGS, ME, and SE independently.
+An unofficial patch for the game [BLACK SOULS](https://www.dlsite.com/maniax/work/=/product_id/RJ251629.html), which adds an in-game Options screen. You can change the window resolution and fullscreen mode, and adjust the volume of BGM, BGS, ME, and SE independently.
 
 Read this in other languages: English | [中文](./README.zh.md) | [日本語](./README.ja.md)
 
 ## Features
 
-- Settings screen: adds a “Settings” entry to the title screen and pause menu.
+- Options screen: adds an "Options" entry to the title screen and pause menu.
 - Window resolution: supports 640×480, 1280×960, 1920×1440, and 2560×1920.
-- Borderless fullscreen: fullscreen stretches the game’s original 4:3 image to the screen aspect ratio.
+- Borderless fullscreen: fullscreen stretches the game's original 4:3 image to the screen aspect ratio.
 - Volume controls: independent BGM, BGS, ME, and SE volume controls.
 - Persistent settings: settings are saved in the `Options.ini` file in the game directory.
 

@@ -1,5 +1,6 @@
 {
-  "options.label": "設定",
+  "options.label.title": "OPTIONS",
+  "options.label.menu": "設定",
   "options.display.resolution": "ウィンドウサイズ",
   "options.display.mode": "表示モード",
   "options.display.mode.fullscreen": "全画面",
@@ -38,7 +39,7 @@
   "install.backup.saved": "バックアップを保存しました：{0}",
   "install.backup.exists": "元のバックアップが既に存在するため、保持します：{0}",
   "install.done": "インストールが完了しました。",
-  "install.next": "ゲームを起動した後、タイトル画面またはポーズメニューで「設定」を選択すると設定画面が開きます。",
+  "install.next": "ゲームを起動した後、タイトル画面で「OPTIONS」、ポーズメニューで「設定」を選択すると設定画面が開きます。",
 
   "uninstall.backup.missing": "元のバックアップが見つかりません：{0}",
   "uninstall.backup.invalid": "バックアップが有効な RGSS3A アーカイブではないため、中止しました。",
