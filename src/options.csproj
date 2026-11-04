@@ -8,7 +8,8 @@
     <GameGeneration Condition="'$(GameGeneration)' == ''">1</GameGeneration>
     <GameLocaleDir Condition="'$(GameGeneration)' == '1'">BlackSouls</GameLocaleDir>
     <GameLocaleDir Condition="'$(GameGeneration)' == '2'">BlackSoulsII</GameLocaleDir>
-    <ApplicationIcon>app.ico</ApplicationIcon>
+    <ApplicationIcon Condition="'$(GameGeneration)' == '1'">..\artifacts\icons\BlackSouls.ico</ApplicationIcon>
+    <ApplicationIcon Condition="'$(GameGeneration)' == '2'">..\artifacts\icons\BlackSoulsII.ico</ApplicationIcon>
     <RootNamespace>OptionsPatch</RootNamespace>
     <Locale Condition="'$(Locale)' == ''">zh</Locale>
     <BuildDate>$([System.DateTime]::Now.ToString("yyyy.MM.dd"))</BuildDate>
@@ -27,4 +28,11 @@
     <EmbeddedResource Include="options.rb" Link="options.rb" />
     <EmbeddedResource Include="..\locales\$(GameLocaleDir)\$(Locale).json" Link="locale.json" />
   </ItemGroup>
+  <Target Name="GenerateIcons" BeforeTargets="PrepareForBuild"
+          Inputs="$(MSBuildThisFileDirectory)..\assets\Leaf.png;$(MSBuildThisFileDirectory)..\assets\Alice.png;$(MSBuildThisFileDirectory)..\tools\IconBuilder\Program.cs;$(MSBuildThisFileDirectory)..\tools\IconBuilder\IconBuilder.csproj"
+          Outputs="$(MSBuildThisFileDirectory)..\artifacts\icons\BlackSouls.ico;$(MSBuildThisFileDirectory)..\artifacts\icons\BlackSoulsII.ico">
+    <Exec Command="dotnet build &quot;$(MSBuildThisFileDirectory)..\tools\IconBuilder\IconBuilder.csproj&quot; -c Release" />
+    <Exec Command="dotnet run --project &quot;$(MSBuildThisFileDirectory)..\tools\IconBuilder\IconBuilder.csproj&quot; -c Release --no-build -- &quot;$(MSBuildThisFileDirectory)..\assets\Leaf.png&quot; &quot;$(MSBuildThisFileDirectory)..\artifacts\icons\BlackSouls.ico&quot;" />
+    <Exec Command="dotnet run --project &quot;$(MSBuildThisFileDirectory)..\tools\IconBuilder\IconBuilder.csproj&quot; -c Release --no-build -- &quot;$(MSBuildThisFileDirectory)..\assets\Alice.png&quot; &quot;$(MSBuildThisFileDirectory)..\artifacts\icons\BlackSoulsII.ico&quot;" />
+  </Target>
 </Project>
