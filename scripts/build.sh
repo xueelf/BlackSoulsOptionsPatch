@@ -7,37 +7,37 @@ cd "$root"
 stage="release/.stage"
 rm -rf "$stage"
 trap 'rm -rf "$stage"' EXIT
-mkdir -p release "$stage/cn" "$stage/jp" "$stage/en"
+mkdir -p release "$stage"
+rm -f release/*.exe release/*.pdb
 
-dotnet publish src/options.csproj \
-  -c Release \
-  -r win-x64 \
-  --self-contained true \
-  -p:PublishSingleFile=true \
-  -p:Locale=zh \
-  -p:AssemblyName="BLACK SOULS CN options" \
-  -o "$stage/cn"
+generations=(1 2)
+generation_names=("BLACK SOULS" "BLACK SOULS II")
+generation_assets=("BLACK-SOULS" "BLACK-SOULS-II")
+locales=(zh ja en)
+locale_names=(CN JP EN)
 
-dotnet publish src/options.csproj \
-  -c Release \
-  -r win-x64 \
-  --self-contained true \
-  -p:PublishSingleFile=true \
-  -p:Locale=ja \
-  -p:AssemblyName="BLACK SOULS JP options" \
-  -o "$stage/jp"
+for generation_index in "${!generations[@]}"; do
+  generation="${generations[$generation_index]}"
+  generation_name="${generation_names[$generation_index]}"
+  generation_asset="${generation_assets[$generation_index]}"
 
-dotnet publish src/options.csproj \
-  -c Release \
-  -r win-x64 \
-  --self-contained true \
-  -p:PublishSingleFile=true \
-  -p:Locale=en \
-  -p:AssemblyName="BLACK SOULS EN options" \
-  -o "$stage/en"
+  for locale_index in "${!locales[@]}"; do
+    locale="${locales[$locale_index]}"
+    locale_name="${locale_names[$locale_index]}"
+    assembly_name="$generation_name $locale_name options"
+    output_dir="$stage/BlackSouls-$generation-$locale"
 
-rm -f release/*.exe
-cp "$stage/cn/BLACK SOULS CN options.exe" release/BLACK-SOULS-CN-options.exe
-cp "$stage/jp/BLACK SOULS JP options.exe" release/BLACK-SOULS-JP-options.exe
-cp "$stage/en/BLACK SOULS EN options.exe" release/BLACK-SOULS-EN-options.exe
-rm -f release/*.pdb
+    mkdir -p "$output_dir"
+    dotnet publish src/options.csproj \
+      -c Release \
+      -r win-x64 \
+      --self-contained true \
+      -p:PublishSingleFile=true \
+      -p:GameGeneration="$generation" \
+      -p:Locale="$locale" \
+      -p:AssemblyName="$assembly_name" \
+      -o "$output_dir"
+
+    cp "$output_dir/$assembly_name.exe" "release/$generation_asset-$locale_name-options.exe"
+  done
+done

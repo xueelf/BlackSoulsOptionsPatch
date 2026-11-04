@@ -9,20 +9,51 @@ namespace OptionsPatch;
 
 internal static class Program
 {
-    private const string ScriptTitle = "BLACK SOULS options";
+    private const string GameTitle = "BLACK SOULS";
     private const string BackupSuffix = ".bsopts.bak";
     private const string TempSuffix = ".bsopts.tmp";
+    private static readonly string[] RomanNumerals =
+    {
+        "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X",
+    };
     private static readonly string Version = GetVersion();
+    private static readonly int GameGeneration = GetGameGeneration();
+    private static readonly string GameName = $"{GameTitle} {ToRoman(GameGeneration)}".TrimEnd();
+    private static readonly string ScriptTitle = GameName + " options";
 
     private static readonly Dictionary<string, string> _text = new();
 
     private static string GetVersion()
     {
-        var attribute = Assembly.GetExecutingAssembly()
-            .GetCustomAttribute<AssemblyInformationalVersionAttribute>();
-        string? version = attribute?.InformationalVersion;
+        return Assembly.GetExecutingAssembly()
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()!
+            .InformationalVersion;
+    }
 
-        return string.IsNullOrEmpty(version) ? "unknown" : version.Split('+')[0];
+    private static int GetGameGeneration()
+    {
+        var attribute = Assembly.GetExecutingAssembly()
+            .GetCustomAttributes<AssemblyMetadataAttribute>()
+            .FirstOrDefault(a => a.Key == "GameGeneration");
+        string? value = attribute?.Value;
+
+        if (!int.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out int generation) ||
+            generation < 1 || generation > RomanNumerals.Length)
+        {
+            throw new InvalidOperationException($"Invalid GameGeneration metadata: {value ?? "(missing)"}");
+        }
+
+        return generation;
+    }
+
+    private static string ToRoman(int generation)
+    {
+        if (generation == 1)
+        {
+            return "";
+        }
+
+        return RomanNumerals[generation - 1];
     }
 
     private static string T(string key)
@@ -69,7 +100,7 @@ internal static class Program
 
     private static int RunMenu()
     {
-        Console.WriteLine(TF("terminal.header", Version));
+        Console.WriteLine(TF("terminal.header", GameName, Version));
         Console.WriteLine();
 
         string gameDir = AppContext.BaseDirectory;
@@ -253,7 +284,8 @@ internal static class Program
         string tempPath = archivePath + TempSuffix;
         File.Delete(tempPath);
 
-        Info(T("install.repack"));
+        long archiveSizeMb = (new FileInfo(archivePath).Length + 1024 * 1024 - 1) / (1024 * 1024);
+        Info(TF("install.repack", archiveSizeMb));
 
         Rgss3aArchive.Replace(archivePath, tempPath, archive, scriptsEntry, newScripts);
 
@@ -358,18 +390,58 @@ internal static class Program
         string ini = Path.Combine(gameDir, "Game.ini");
         try
         {
-            if (File.Exists(ini) &&
-                File.ReadAllText(ini).IndexOf("Title=BLACK SOULS", StringComparison.OrdinalIgnoreCase) >= 0)
+            if (File.Exists(ini))
             {
-                return true;
+                // Latin1 preserves the raw bytes, including CP932 title characters.
+                string text = Encoding.Latin1.GetString(File.ReadAllBytes(ini));
+                string? titleLine = text.Split('\n')
+                    .Select(line => line.TrimEnd('\r'))
+                    .FirstOrDefault(line => line.StartsWith("Title=", StringComparison.OrdinalIgnoreCase));
+                if (titleLine != null)
+                {
+                    string title = titleLine[6..].TrimEnd(' ', '\t', '\u0081', '\u0040');
+
+                    if (title.StartsWith(GameTitle, StringComparison.OrdinalIgnoreCase) &&
+                        ExtractGameNumber(title).Equals(ToRoman(GameGeneration), StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+                }
             }
         }
         catch
         {
         }
 
-        Error(T("check.ini"));
+        Error(TF("check.ini", GameName));
         return false;
+    }
+
+    private static string ExtractGameNumber(string title)
+    {
+        string rest = title[GameTitle.Length..].TrimStart(' ', '\t', '\u0081', '\u0040');
+        if (rest.Length == 0)
+        {
+            return "";
+        }
+
+        if (rest.Length >= 2 && rest[0] == '\u0087' && rest[1] >= '\u0054' && rest[1] <= '\u005D')
+        {
+            return RomanNumerals[rest[1] - '\u0054'];
+        }
+
+        int length = 0;
+        while (length < rest.Length && "IVXLCDM".Contains(char.ToUpperInvariant(rest[length])))
+        {
+            length++;
+        }
+
+        if (length == 0)
+        {
+            return "?";
+        }
+
+        return rest[..length].ToUpperInvariant();
     }
 
     private static bool IsGameRunning(string gameDir)

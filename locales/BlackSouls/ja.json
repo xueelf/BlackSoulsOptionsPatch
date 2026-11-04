@@ -11,7 +11,7 @@
   "options.audio.se": "SE 音量",
   "options.reset": "デフォルトに戻す",
 
-  "terminal.header": "BLACK SOULS options v{0}",
+  "terminal.header": "{0} options v{1}",
   "terminal.status.dir": "ゲームディレクトリ：{0}",
   "terminal.status.patch": "インストール状態：{0}",
   "terminal.status.patch.installed": "インストール済み",
@@ -26,7 +26,7 @@
   "terminal.error": "エラーが発生しました：{0}",
 
   "check.root": "exe をゲームディレクトリ（Game.exe、Game.rgss3a と同じ場所）に置いてから実行してください。",
-  "check.ini": "現在のディレクトリは BLACK SOULS のゲームディレクトリではありません。",
+  "check.ini": "現在のディレクトリは {0} のゲームディレクトリではありません。",
   "check.running": "ゲームが起動中ですので、ゲームを終了してください。",
   "check.archive": "ゲームファイルが不完全です：Game.rgss3a に Data/Scripts.rvdata2 ファイルがありません。",
   "check.main": "ゲームスクリプトの構造が不完全です：Main スクリプトが見つかりません。",
@@ -34,7 +34,7 @@
   "install.reading": "ゲームアーカイブを読み込んでいます……",
   "install.update": "インストール済みのパッチを検出したため、更新しています……",
   "install.add": "設定スクリプトをインストールしています……",
-  "install.repack": "Game.rgss3a を再パックしています（約 140 MB）……",
+  "install.repack": "Game.rgss3a を再パックしています（約 {0} MB）……",
   "install.backup.start": "元の Game.rgss3a ファイルをバックアップしています……",
   "install.backup.saved": "バックアップを保存しました：{0}",
   "install.backup.exists": "元のバックアップが既に存在するため、保持します：{0}",

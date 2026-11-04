@@ -5,6 +5,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AssemblyName>BLACK SOULS options</AssemblyName>
+    <GameGeneration Condition="'$(GameGeneration)' == ''">1</GameGeneration>
+    <GameLocaleDir Condition="'$(GameGeneration)' == '1'">BlackSouls</GameLocaleDir>
+    <GameLocaleDir Condition="'$(GameGeneration)' == '2'">BlackSoulsII</GameLocaleDir>
     <ApplicationIcon>app.ico</ApplicationIcon>
     <RootNamespace>OptionsPatch</RootNamespace>
     <Locale Condition="'$(Locale)' == ''">zh</Locale>
@@ -20,7 +23,8 @@
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
   </PropertyGroup>
   <ItemGroup>
+    <AssemblyMetadata Include="GameGeneration" Value="$(GameGeneration)" />
     <EmbeddedResource Include="options.rb" Link="options.rb" />
-    <EmbeddedResource Include="..\locales\$(Locale).json" Link="locale.json" />
+    <EmbeddedResource Include="..\locales\$(GameLocaleDir)\$(Locale).json" Link="locale.json" />
   </ItemGroup>
 </Project>

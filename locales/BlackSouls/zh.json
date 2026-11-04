@@ -11,7 +11,7 @@
   "options.audio.se": "SE 音量",
   "options.reset": "恢复默认",
 
-  "terminal.header": "BLACK SOULS options v{0}",
+  "terminal.header": "{0} options v{1}",
   "terminal.status.dir": "游戏目录：{0}",
   "terminal.status.patch": "安装状态：{0}",
   "terminal.status.patch.installed": "已安装",
@@ -26,7 +26,7 @@
   "terminal.error": "发生错误：{0}",
 
   "check.root": "请将 exe 放至游戏根目录（与 Game.exe、Game.rgss3a 平级）后再运行。",
-  "check.ini": "当前不处于 BLACK SOULS 的游戏目录内。",
+  "check.ini": "当前不处于 {0} 的游戏目录内。",
   "check.running": "游戏正在运行，请先退出游戏。",
   "check.archive": "游戏文件不完整：Game.rgss3a 中缺少 Data/Scripts.rvdata2 文件。",
   "check.main": "游戏脚本结构不完整：找不到 Main 脚本。",
@@ -34,7 +34,7 @@
   "install.reading": "正在读取游戏档案……",
   "install.update": "检测到已安装的补丁，正在更新……",
   "install.add": "正在安装设置脚本……",
-  "install.repack": "正在重新打包 Game.rgss3a（约 140 MB）……",
+  "install.repack": "正在重新打包 Game.rgss3a（约 {0} MB）……",
   "install.backup.start": "正在备份原版 Game.rgss3a 文件……",
   "install.backup.saved": "备份已保存：{0}",
   "install.backup.exists": "原版备份已存在，保留：{0}",
