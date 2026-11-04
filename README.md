@@ -1,6 +1,6 @@
 # BlackSoulsOptionsPatch
 
-An unofficial patch for the game [BLACK SOULS](https://www.dlsite.com/maniax/work/=/product_id/RJ251629.html), which adds an in-game Options screen. You can change the window resolution and fullscreen mode, and adjust the volume of BGM, BGS, ME, and SE independently.
+An unofficial patch for [BLACK SOULS](https://www.dlsite.com/maniax/work/=/product_id/RJ251629.html) and [BLACK SOULS II](https://www.dlsite.com/maniax/work/=/product_id/RJ293183.html), which adds an in-game Options screen. You can change the window resolution and fullscreen mode, and adjust the volume of BGM, BGS, ME, and SE independently.
 
 Read this in other languages: English | [中文](./README.zh.md) | [日本語](./README.ja.md)
 
@@ -14,16 +14,24 @@ Read this in other languages: English | [中文](./README.zh.md) | [日本語](.
 
 ## Download
 
-Download the exe for your language from [GitHub Releases](https://github.com/xueelf/BlackSoulsOptionsPatch/releases/latest):
+Download the exe for your game from [GitHub Releases](https://github.com/xueelf/BlackSoulsOptionsPatch/releases/latest):
+
+BLACK SOULS:
 
 - Chinese: `BLACK-SOULS-CN-options.exe`
 - Japanese: `BLACK-SOULS-JP-options.exe`
 - English: `BLACK-SOULS-EN-options.exe`
 
+BLACK SOULS II:
+
+- Chinese: `BLACK-SOULS-II-CN-options.exe`
+- Japanese: `BLACK-SOULS-II-JP-options.exe`
+- English: `BLACK-SOULS-II-EN-options.exe`
+
 ## Usage
 
 1. Exit the game.
-2. Place the exe for your language in the game directory, alongside `Game.exe` and `Game.rgss3a`.
+2. Place the exe for your game in the game directory, alongside `Game.exe` and `Game.rgss3a`.
 3. Double-click the exe and select a number:
 
 ```text

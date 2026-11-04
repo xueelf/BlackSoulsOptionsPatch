@@ -1,6 +1,6 @@
 # BlackSoulsOptionsPatch
 
-游戏 [BLACK SOULS](https://www.dlsite.com/maniax/work/=/product_id/RJ251629.html) 的非官方优化补丁，在程序内添加「设置」界面。可修改窗口分辨率、全屏显示，以及提供独立的 BGM、BGS、ME、SE 音量控制。
+游戏 [BLACK SOULS](https://www.dlsite.com/maniax/work/=/product_id/RJ259844.html) 与 [BLACK SOULS II](https://www.dlsite.com/maniax/work/=/product_id/RJ280293.html) 的非官方优化补丁，在程序内添加「设置」界面。可修改窗口分辨率、全屏显示，以及提供独立的 BGM、BGS、ME、SE 音量控制。
 
 使用其他语言阅读：[English](./README.md) | 中文 | [日本語](./README.ja.md)
 
@@ -14,16 +14,24 @@
 
 ## 下载
 
-从 [GitHub Releases](https://github.com/xueelf/BlackSoulsOptionsPatch/releases/latest) 下载对应语言的 exe：
+从 [GitHub Releases](https://github.com/xueelf/BlackSoulsOptionsPatch/releases/latest) 下载对应游戏的 exe：
+
+BLACK SOULS：
 
 - 中文：`BLACK-SOULS-CN-options.exe`
 - 日文：`BLACK-SOULS-JP-options.exe`
 - 英文：`BLACK-SOULS-EN-options.exe`
 
+BLACK SOULS II：
+
+- 中文：`BLACK-SOULS-II-CN-options.exe`
+- 日文：`BLACK-SOULS-II-JP-options.exe`
+- 英文：`BLACK-SOULS-II-EN-options.exe`
+
 ## 使用
 
 1. 退出游戏。
-2. 将对应语言的 exe 放到游戏目录，与 `Game.exe`、`Game.rgss3a` 同级。
+2. 将对应游戏的 exe 放到游戏目录，与 `Game.exe`、`Game.rgss3a` 同级。
 3. 双击 exe，按数字选择：
 
 ```text
