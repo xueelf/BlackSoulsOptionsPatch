@@ -10,6 +10,7 @@
 - 窗口分辨率：支持 640×480、1280×960、1920×1440、2560×1920 四种分辨率。
 - 无边框全屏：全屏会将游戏原本的 4:3 画面强行拉伸到屏幕比例。
 - 音量控制：独立的 BGM、BGS、ME、SE 音量控制。
+- DPI 缩放：为 `Game.exe` 启用 Windows 高 DPI 兼容性，避免系统缩放导致画面拉伸。
 - 配置持久化：设置会保存在游戏目录的 `Options.ini` 文件中。
 
 ## 下载
@@ -40,7 +41,7 @@ BLACK SOULS II：
 3) 退出
 ```
 
-安装时会将游戏原版 `Game.rgss3a` 备份为 `Game.rgss3a.bsopts.bak`。卸载会恢复原版，并删除备份和 `Options.ini`。
+安装时会将游戏原版 `Game.rgss3a` 备份为 `Game.rgss3a.bsopts.bak`。卸载会恢复原版，删除备份和 `Options.ini` 文件，并移除高 DPI 兼容性设置。
 
 如果 exe 不处于游戏目录内，或缺少 `Game.exe`、`Game.rgss3a` 文件，程序会提示错误信息。
 
