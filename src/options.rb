@@ -32,6 +32,7 @@ module BSOPTS
   @work_area = nil
   @window_handle = 0
   @fullscreen_saved = nil
+  @return_to_title_options = false
 
   #--------------------------------------------------------------------------
   # Win32 helpers
@@ -327,6 +328,7 @@ module BSOPTS
     end
 
     attr_reader :settings_font
+    attr_accessor :return_to_title_options
   end
 end
 
@@ -612,6 +614,7 @@ end
 class Scene_Base
   def command_bs_options
     font = @command_window.contents.font if @command_window
+    BSOPTS.return_to_title_options = is_a?(Scene_Title)
 
     BSOPTS.start_settings(font)
   end
@@ -665,6 +668,10 @@ unless Scene_Title.method_defined?(:bs_options_start)
       bs_options_start
 
       BSOPTS.apply_window
+      if BSOPTS.return_to_title_options
+        @command_window.select_symbol(:bs_options)
+        BSOPTS.return_to_title_options = false
+      end
     end
   end
 end
