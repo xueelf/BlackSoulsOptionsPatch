@@ -10,6 +10,7 @@ Read this in other languages: English | [中文](./README.zh.md) | [日本語](.
 - Window resolution: supports 640×480, 1280×960, 1920×1440, and 2560×1920.
 - Borderless fullscreen: fullscreen stretches the game's original 4:3 image to the screen aspect ratio.
 - Volume controls: independent BGM, BGS, ME, and SE volume controls.
+- DPI scaling: enables Windows high-DPI compatibility for `Game.exe` to prevent stretching under display scaling.
 - Persistent settings: settings are saved in the `Options.ini` file in the game directory.
 
 ## Download
@@ -40,7 +41,7 @@ BLACK SOULS II:
 3) Exit
 ```
 
-During installation the original `Game.rgss3a` is backed up as `Game.rgss3a.bsopts.bak`. Uninstalling restores the original, and deletes the backup and `Options.ini`.
+During installation the original `Game.rgss3a` is backed up as `Game.rgss3a.bsopts.bak`. Uninstalling restores the original, deletes the backup and `Options.ini`, and removes the high-DPI compatibility setting.
 
 If the exe is not in the game directory, or `Game.exe` or `Game.rgss3a` is missing, the program will show an error message.
 
