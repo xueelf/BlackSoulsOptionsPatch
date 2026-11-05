@@ -5,13 +5,21 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AssemblyName>BLACK SOULS options</AssemblyName>
+    <Company>Yuki</Company>
+    <Product>Black Souls Options Patch</Product>
+    <Copyright>Copyright © 2026 Yuki &lt;admin@yuki.sh&gt;</Copyright>
     <GameGeneration Condition="'$(GameGeneration)' == ''">1</GameGeneration>
+    <GameName Condition="'$(GameGeneration)' == '1'">BLACK SOULS</GameName>
+    <GameName Condition="'$(GameGeneration)' == '2'">BLACK SOULS II</GameName>
     <GameLocaleDir Condition="'$(GameGeneration)' == '1'">BlackSouls</GameLocaleDir>
     <GameLocaleDir Condition="'$(GameGeneration)' == '2'">BlackSoulsII</GameLocaleDir>
     <ApplicationIcon Condition="'$(GameGeneration)' == '1'">..\artifacts\icons\BlackSouls.ico</ApplicationIcon>
     <ApplicationIcon Condition="'$(GameGeneration)' == '2'">..\artifacts\icons\BlackSoulsII.ico</ApplicationIcon>
     <RootNamespace>OptionsPatch</RootNamespace>
     <Locale Condition="'$(Locale)' == ''">zh</Locale>
+    <AssemblyTitle Condition="'$(Locale)' == 'zh'">游戏 $(GameName) 的非官方优化补丁，在程序内添加「设置」界面。</AssemblyTitle>
+    <AssemblyTitle Condition="'$(Locale)' == 'ja'">ゲーム $(GameName) の非公式の最適化パッチで、プログラム内に設定画面を追加します。</AssemblyTitle>
+    <AssemblyTitle Condition="'$(Locale)' == 'en'">An unofficial patch for $(GameName) that adds an in-game Options screen.</AssemblyTitle>
     <BuildDate>$([System.DateTime]::Now.ToString("yyyy.MM.dd"))</BuildDate>
     <Version>$(BuildDate)</Version>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
