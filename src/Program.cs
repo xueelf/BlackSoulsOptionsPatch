@@ -2,16 +2,21 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO.Compression;
 using System.Reflection;
+using System.Runtime.Versioning;
 using System.Text;
 using System.Text.Json;
+using Microsoft.Win32;
 
 namespace OptionsPatch;
 
+[SupportedOSPlatform("windows")]
 internal static class Program
 {
     private const string GameTitle = "BLACK SOULS";
     private const string BackupSuffix = ".bsopts.bak";
     private const string TempSuffix = ".bsopts.tmp";
+    private const string DpiLayer = "HIGHDPIAWARE";
+    private const string CompatLayersKey = @"Software\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers";
     private static readonly string[] RomanNumerals =
     {
         "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X",
@@ -315,6 +320,7 @@ internal static class Program
         }
 
         File.Move(tempPath, archivePath, overwrite: true);
+        AddHighDpiAware(Path.GetDirectoryName(archivePath)!);
 
         Success(T("install.done"));
         Console.WriteLine();
@@ -340,8 +346,60 @@ internal static class Program
 
         string optionsPath = Path.Combine(Path.GetDirectoryName(archivePath)!, "Options.ini");
         File.Delete(optionsPath);
+        RemoveHighDpiAware(Path.GetDirectoryName(archivePath)!);
 
         Success(T("uninstall.done"));
+    }
+
+    private static void AddHighDpiAware(string gameDir)
+    {
+        try
+        {
+            string exePath = Path.GetFullPath(Path.Combine(gameDir, "Game.exe"));
+            using RegistryKey key = Registry.CurrentUser.CreateSubKey(CompatLayersKey)!;
+            string? value = key.GetValue(exePath) as string;
+            string[] layers = (value ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+            if (layers.Any(layer => string.Equals(layer, DpiLayer, StringComparison.OrdinalIgnoreCase)))
+            {
+                return;
+            }
+
+            key.SetValue(exePath, layers.Length == 0 ? $"~ {DpiLayer}" : $"{value} {DpiLayer}",
+                RegistryValueKind.String);
+        }
+        catch
+        {
+        }
+    }
+
+    private static void RemoveHighDpiAware(string gameDir)
+    {
+        try
+        {
+            string exePath = Path.GetFullPath(Path.Combine(gameDir, "Game.exe"));
+            using RegistryKey? key = Registry.CurrentUser.OpenSubKey(CompatLayersKey, writable: true);
+            if (key?.GetValue(exePath) is not string value)
+            {
+                return;
+            }
+
+            string[] layers = value.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                .Where(layer => !string.Equals(layer, DpiLayer, StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+
+            if (layers.Length == 0 || (layers.Length == 1 && layers[0] == "~"))
+            {
+                key.DeleteValue(exePath, throwOnMissingValue: false);
+            }
+            else
+            {
+                key.SetValue(exePath, string.Join(' ', layers), RegistryValueKind.String);
+            }
+        }
+        catch
+        {
+        }
     }
 
     private static byte[] LoadScript()
