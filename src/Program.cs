@@ -140,6 +140,11 @@ internal static class Program
             string? choice = ReadMenuChoice();
             Console.WriteLine();
 
+            if (choice == null)
+            {
+                return 1;
+            }
+
             if (choice == "3")
             {
                 return 0;
