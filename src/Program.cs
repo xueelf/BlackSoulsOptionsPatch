@@ -740,9 +740,9 @@ internal sealed class Rgss3aArchive
                 throw new InvalidOperationException($"Offset mismatch while writing {entry.Name}.");
             }
 
-            if (ReferenceEquals(entry, target) && entry.NewEncryptedData != null)
+            if (ReferenceEquals(entry, target))
             {
-                destination.Write(entry.NewEncryptedData);
+                destination.Write(entry.NewEncryptedData!);
             }
             else
             {

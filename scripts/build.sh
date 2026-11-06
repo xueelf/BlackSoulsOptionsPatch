@@ -28,9 +28,6 @@ for generation_index in "${!generations[@]}"; do
     mkdir -p "$output_dir"
     dotnet publish src/options.csproj \
       -c Release \
-      -r win-x64 \
-      --self-contained true \
-      -p:PublishSingleFile=true \
       -p:GameGeneration="$generation" \
       -p:Locale="$locale" \
       -p:AssemblyName="$assembly_name" \
