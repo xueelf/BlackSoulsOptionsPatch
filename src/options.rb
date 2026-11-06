@@ -462,8 +462,8 @@ class Window_BSOptions < Window_Command
     values << BSOPTS::TEXT["options.display.mode.window"]
     values << "100%"
 
-    @label_width = labels.map { |text| bitmap.text_size(text).width }.max.to_i + 4
-    @value_width = values.map { |text| bitmap.text_size(text).width }.max.to_i + 4
+    @label_width = labels.map { |text| bitmap.text_size(text).width }.max + 4
+    @value_width = values.map { |text| bitmap.text_size(text).width }.max + 4
 
     bitmap.dispose
 
@@ -603,7 +603,7 @@ unless Window_TitleCommand.method_defined?(:bs_options_make_command_list)
     def make_command_list
       bs_options_make_command_list
 
-      indent = @list.empty? ? "" : @list.first[:name].to_s[/\A */].to_s
+      indent = @list.first[:name].to_s[/\A */].to_s
       @list.insert(@list.size - 1,
                    {:name => indent + BSOPTS::TEXT["options.label.title"], :symbol => :bs_options,
                     :enabled => true, :ext => nil})
@@ -613,10 +613,9 @@ end
 
 class Scene_Base
   def command_bs_options
-    font = @command_window.contents.font if @command_window
     BSOPTS.return_to_title_options = is_a?(Scene_Title)
 
-    BSOPTS.start_settings(font)
+    BSOPTS.start_settings(@command_window.contents.font)
   end
 end
 
