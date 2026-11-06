@@ -365,8 +365,10 @@ internal static class Program
                 return;
             }
 
-            key.SetValue(exePath, layers.Length == 0 ? $"~ {DpiLayer}" : $"{value} {DpiLayer}",
-                RegistryValueKind.String);
+            string updated = layers.Length == 0
+                ? $"~ {DpiLayer}"
+                : $"{string.Join(' ', layers)} {DpiLayer}";
+            key.SetValue(exePath, updated, RegistryValueKind.String);
         }
         catch
         {
@@ -638,10 +640,7 @@ internal sealed class Rgss3aArchive
         {
             using var stream = File.OpenRead(path);
             Span<byte> header = stackalloc byte[8];
-            if (stream.Read(header) != 8)
-            {
-                return false;
-            }
+            stream.ReadExactly(header);
 
             return header[0] == (byte)'R' && header[1] == (byte)'G' && header[2] == (byte)'S' &&
                    header[3] == (byte)'S' && header[4] == (byte)'A' && header[5] == (byte)'D' &&
