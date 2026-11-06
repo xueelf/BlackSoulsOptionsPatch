@@ -11,20 +11,18 @@ mkdir -p release "$stage"
 rm -f release/*.exe release/*.pdb
 
 generations=(1 2)
-generation_names=("BLACK SOULS" "BLACK SOULS II")
-generation_assets=("BLACK-SOULS" "BLACK-SOULS-II")
+generation_assets=("BlackSouls" "BlackSoulsII")
 locales=(zh ja en)
 locale_names=(CN JP EN)
 
 for generation_index in "${!generations[@]}"; do
   generation="${generations[$generation_index]}"
-  generation_name="${generation_names[$generation_index]}"
   generation_asset="${generation_assets[$generation_index]}"
 
   for locale_index in "${!locales[@]}"; do
     locale="${locales[$locale_index]}"
     locale_name="${locale_names[$locale_index]}"
-    assembly_name="$generation_name $locale_name options"
+    assembly_name="$generation_asset-Options-$locale_name"
     output_dir="$stage/BlackSouls-$generation-$locale"
 
     mkdir -p "$output_dir"
@@ -38,6 +36,6 @@ for generation_index in "${!generations[@]}"; do
       -p:AssemblyName="$assembly_name" \
       -o "$output_dir"
 
-    cp "$output_dir/$assembly_name.exe" "release/$generation_asset-$locale_name-options.exe"
+    cp "$output_dir/$assembly_name.exe" "release/$assembly_name.exe"
   done
 done

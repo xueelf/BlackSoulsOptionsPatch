@@ -19,15 +19,15 @@ Download the exe for your game from [GitHub Releases](https://github.com/xueelf/
 
 BLACK SOULS:
 
-- Chinese: `BLACK-SOULS-CN-options.exe`
-- Japanese: `BLACK-SOULS-JP-options.exe`
-- English: `BLACK-SOULS-EN-options.exe`
+- Chinese: `BlackSouls-Options-CN.exe`
+- Japanese: `BlackSouls-Options-JP.exe`
+- English: `BlackSouls-Options-EN.exe`
 
 BLACK SOULS II:
 
-- Chinese: `BLACK-SOULS-II-CN-options.exe`
-- Japanese: `BLACK-SOULS-II-JP-options.exe`
-- English: `BLACK-SOULS-II-EN-options.exe`
+- Chinese: `BlackSoulsII-Options-CN.exe`
+- Japanese: `BlackSoulsII-Options-JP.exe`
+- English: `BlackSoulsII-Options-EN.exe`
 
 ## Usage
 

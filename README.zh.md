@@ -19,15 +19,15 @@
 
 BLACK SOULS：
 
-- 中文：`BLACK-SOULS-CN-options.exe`
-- 日文：`BLACK-SOULS-JP-options.exe`
-- 英文：`BLACK-SOULS-EN-options.exe`
+- 中文：`BlackSouls-Options-CN.exe`
+- 日文：`BlackSouls-Options-JP.exe`
+- 英文：`BlackSouls-Options-EN.exe`
 
 BLACK SOULS II：
 
-- 中文：`BLACK-SOULS-II-CN-options.exe`
-- 日文：`BLACK-SOULS-II-JP-options.exe`
-- 英文：`BLACK-SOULS-II-EN-options.exe`
+- 中文：`BlackSoulsII-Options-CN.exe`
+- 日文：`BlackSoulsII-Options-JP.exe`
+- 英文：`BlackSoulsII-Options-EN.exe`
 
 ## 使用
 
