@@ -1,6 +1,6 @@
 {
-  "options.label.title": "设置",
-  "options.label.menu": "设置",
+  "options.label.title": "选项",
+  "options.label.menu": "选项",
   "options.display.resolution": "窗口大小",
   "options.display.mode": "显示模式",
   "options.display.mode.fullscreen": "全屏",
@@ -9,7 +9,10 @@
   "options.audio.bgs": "BGS 音量",
   "options.audio.me": "ME 音量",
   "options.audio.se": "SE 音量",
+  "options.always_dash": "始终奔跑",
   "options.reset": "恢复默认",
+  "options.value.on": "ON",
+  "options.value.off": "OFF",
 
   "terminal.header": "{0} options v{1}",
   "terminal.status.dir": "游戏目录：{0}",
@@ -39,7 +42,7 @@
   "install.backup.saved": "备份已保存：{0}",
   "install.backup.exists": "原版备份已存在，保留：{0}",
   "install.done": "安装完成。",
-  "install.next": "启动游戏后，可在标题画面或暂停菜单里选择「设置」打开界面。",
+  "install.next": "启动游戏后，可在标题画面或暂停菜单里选择「选项」打开界面。",
 
   "uninstall.backup.missing": "未找到原版备份：{0}",
   "uninstall.backup.invalid": "备份不是有效的 RGSS3A 档案，已停止。",
