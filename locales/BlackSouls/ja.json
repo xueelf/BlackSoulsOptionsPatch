@@ -9,7 +9,10 @@
   "options.audio.bgs": "BGS 音量",
   "options.audio.me": "ME 音量",
   "options.audio.se": "SE 音量",
+  "options.always_dash": "常時ダッシュ",
   "options.reset": "デフォルトに戻す",
+  "options.value.on": "ON",
+  "options.value.off": "OFF",
 
   "terminal.header": "{0} options v{1}",
   "terminal.status.dir": "ゲームディレクトリ：{0}",

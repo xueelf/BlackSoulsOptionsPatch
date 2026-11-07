@@ -8,12 +8,13 @@ module BSOPTS
   ]
 
   DEFAULTS = {
-    :resolution => "640x480",
-    :fullscreen => false,
-    :bgm        => 100,
-    :bgs        => 100,
-    :me         => 100,
-    :se         => 100
+    :resolution  => "640x480",
+    :fullscreen  => false,
+    :bgm         => 100,
+    :bgs         => 100,
+    :me          => 100,
+    :se          => 100,
+    :always_dash => false
   }
 
   SWP_NOZORDER     = 0x0004
@@ -86,6 +87,8 @@ module BSOPTS
                 cfg[:me] = clamp_volume(value.to_i)
               when "se"
                 cfg[:se] = clamp_volume(value.to_i)
+              when "always_dash"
+                cfg[:always_dash] = (value.to_i != 0)
               end
             end
           end
@@ -108,6 +111,7 @@ module BSOPTS
           file.write("bgs=#{config[:bgs]}\n")
           file.write("me=#{config[:me]}\n")
           file.write("se=#{config[:se]}\n")
+          file.write("always_dash=#{config[:always_dash] ? 1 : 0}\n")
         end
       rescue
       end
@@ -177,6 +181,11 @@ module BSOPTS
       Audio.bs_options_replay_bgm if key == :bgm
       Audio.bs_options_replay_bgs if key == :bgs
       true
+    end
+
+    def toggle_setting(key)
+      config[key] = !config[key]
+      save_config
     end
 
     def reset
@@ -420,6 +429,7 @@ class Window_BSOptions < Window_Command
     "options.audio.bgs",
     "options.audio.me",
     "options.audio.se",
+    "options.always_dash",
     "options.reset"
   ]
 
@@ -460,6 +470,8 @@ class Window_BSOptions < Window_Command
     values = BSOPTS::RESOLUTIONS.map { |resolution| resolution.sub("x", " x ") }
     values << BSOPTS::TEXT["options.display.mode.fullscreen"]
     values << BSOPTS::TEXT["options.display.mode.window"]
+    values << BSOPTS::TEXT["options.value.on"]
+    values << BSOPTS::TEXT["options.value.off"]
     values << "100%"
 
     @label_width = labels.map { |text| bitmap.text_size(text).width }.max + 4
@@ -495,6 +507,8 @@ class Window_BSOptions < Window_Command
       BSOPTS::TEXT[BSOPTS.config[:fullscreen] ? "options.display.mode.fullscreen" : "options.display.mode.window"]
     when 2..5
       "#{BSOPTS.config[VOLUME_KEYS[index - 2]]}%"
+    when 6
+      BSOPTS::TEXT[BSOPTS.config[:always_dash] ? "options.value.on" : "options.value.off"]
     else
       ""
     end
@@ -507,7 +521,7 @@ class Window_BSOptions < Window_Command
     cursor_down(true) if Input.repeat?(:DOWN)
     cursor_up(true) if Input.repeat?(:UP)
 
-    if @index <= 1
+    if @index <= 1 || @index == 6
       adjust_value(1) if Input.trigger?(:RIGHT)
       adjust_value(-1) if Input.trigger?(:LEFT)
     else
@@ -538,6 +552,9 @@ class Window_BSOptions < Window_Command
       Sound.play_cursor
     when 2..5
       Sound.play_cursor if BSOPTS.change_volume(VOLUME_KEYS[@index - 2], direction * 5)
+    when 6
+      BSOPTS.toggle_setting(:always_dash)
+      Sound.play_cursor
     else
       return
     end
@@ -642,6 +659,19 @@ unless Window_MenuCommand.method_defined?(:bs_options_make_command_list)
       @list.insert(index,
                    {:name => BSOPTS::TEXT["options.label.menu"], :symbol => :bs_options,
                     :enabled => true, :ext => nil})
+    end
+  end
+end
+
+unless Game_Player.method_defined?(:bs_options_original_dash_rev?)
+  class Game_Player
+    alias_method :bs_options_original_dash_rev?, :dash_rev?
+    def dash_rev?
+      return bs_options_original_dash_rev? unless BSOPTS.config[:always_dash]
+      return false if @move_route_forcing
+      return false if $game_map.disable_dash?
+      return false if vehicle
+      !Input.press?(:A)
     end
   end
 end

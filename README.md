@@ -6,10 +6,11 @@ Read this in other languages: English | [中文](./README.zh.md) | [日本語](.
 
 ## Features
 
-- Options screen: adds an "Options" entry to the title screen and pause menu.
+- Options screen: adds an "Options" entry to the title screen and pause menu. The screen is modeled after RPG Maker MZ.
 - Window resolution: supports 640×480, 1280×960, 1920×1440, and 2560×1920.
 - Borderless fullscreen: fullscreen stretches the game's original 4:3 image to the screen aspect ratio.
 - Volume controls: independent BGM, BGS, ME, and SE volume controls.
+- Dash option: off by default. When enabled, dash by default and hold Shift to walk.
 - DPI scaling: enables Windows high-DPI compatibility for `Game.exe` to prevent stretching under display scaling.
 - Persistent settings: settings are saved in the `Options.ini` file in the game directory.
 

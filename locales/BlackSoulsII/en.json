@@ -9,7 +9,10 @@
   "options.audio.bgs": "BGS Volume",
   "options.audio.me": "ME Volume",
   "options.audio.se": "SE Volume",
+  "options.always_dash": "Always Dash",
   "options.reset": "Restore Defaults",
+  "options.value.on": "ON",
+  "options.value.off": "OFF",
 
   "terminal.header": "{0} options v{1}",
   "terminal.status.dir": "Game directory: {0}",
