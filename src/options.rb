@@ -423,13 +423,13 @@ end
 #==============================================================================
 class Window_BSOptions < Window_Command
   COMMAND_KEYS = [
-    "options.display.resolution",
     "options.display.mode",
+    "options.display.resolution",
+    "options.always_dash",
     "options.audio.bgm",
     "options.audio.bgs",
     "options.audio.me",
     "options.audio.se",
-    "options.always_dash",
     "options.reset"
   ]
 
@@ -502,13 +502,13 @@ class Window_BSOptions < Window_Command
   def value_text(index)
     case index
     when 0
-      BSOPTS.resolution_label
-    when 1
       BSOPTS::TEXT[BSOPTS.config[:fullscreen] ? "options.display.mode.fullscreen" : "options.display.mode.window"]
-    when 2..5
-      "#{BSOPTS.config[VOLUME_KEYS[index - 2]]}%"
-    when 6
+    when 1
+      BSOPTS.resolution_label
+    when 2
       BSOPTS::TEXT[BSOPTS.config[:always_dash] ? "options.value.on" : "options.value.off"]
+    when 3..6
+      "#{BSOPTS.config[VOLUME_KEYS[index - 3]]}%"
     else
       ""
     end
@@ -521,7 +521,7 @@ class Window_BSOptions < Window_Command
     cursor_down(true) if Input.repeat?(:DOWN)
     cursor_up(true) if Input.repeat?(:UP)
 
-    if @index <= 1 || @index == 6
+    if @index <= 2
       adjust_value(1) if Input.trigger?(:RIGHT)
       adjust_value(-1) if Input.trigger?(:LEFT)
     else
@@ -545,16 +545,16 @@ class Window_BSOptions < Window_Command
   def adjust_value(direction)
     case @index
     when 0
-      BSOPTS.cycle_resolution(direction)
-      Sound.play_cursor
-    when 1
       BSOPTS.toggle_fullscreen
       Sound.play_cursor
-    when 2..5
-      Sound.play_cursor if BSOPTS.change_volume(VOLUME_KEYS[@index - 2], direction * 5)
-    when 6
+    when 1
+      BSOPTS.cycle_resolution(direction)
+      Sound.play_cursor
+    when 2
       BSOPTS.toggle_setting(:always_dash)
       Sound.play_cursor
+    when 3..6
+      Sound.play_cursor if BSOPTS.change_volume(VOLUME_KEYS[@index - 3], direction * 5)
     else
       return
     end
