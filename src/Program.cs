@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Globalization;
 using System.IO.Compression;
 using System.Reflection;
 using System.Runtime.Versioning;
@@ -17,13 +16,9 @@ internal static class Program
     private const string TempSuffix = ".bsopts.tmp";
     private const string DpiLayer = "HIGHDPIAWARE";
     private const string CompatLayersKey = @"Software\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers";
-    private static readonly string[] RomanNumerals =
-    {
-        "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X",
-    };
     private static readonly string Version = GetVersion();
     private static readonly int GameGeneration = GetGameGeneration();
-    private static readonly string GameName = $"{GameTitle} {ToRoman(GameGeneration)}".TrimEnd();
+    private static readonly string GameName = GameGeneration == 1 ? GameTitle : GameTitle + " II";
     private static readonly string ScriptTitle = GameName + " options";
 
     private static readonly Dictionary<string, string> _text = new();
@@ -42,23 +37,12 @@ internal static class Program
             .FirstOrDefault(a => a.Key == "GameGeneration");
         string? value = attribute?.Value;
 
-        if (!int.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out int generation) ||
-            generation < 1 || generation > RomanNumerals.Length)
+        if (!int.TryParse(value, out int generation) || generation < 1 || generation > 2)
         {
             throw new InvalidOperationException($"Invalid GameGeneration metadata: {value ?? "(missing)"}");
         }
 
         return generation;
-    }
-
-    private static string ToRoman(int generation)
-    {
-        if (generation == 1)
-        {
-            return "";
-        }
-
-        return RomanNumerals[generation - 1];
     }
 
     private static string T(string key)
@@ -71,13 +55,18 @@ internal static class Program
         return string.Format(T(key), args);
     }
 
-    private static void LoadLocale()
+    private static Stream OpenResource(string suffix)
     {
         var assembly = Assembly.GetExecutingAssembly();
         string resource = assembly.GetManifestResourceNames()
-            .First(name => name.EndsWith("locale.json", StringComparison.OrdinalIgnoreCase));
+            .First(name => name.EndsWith(suffix, StringComparison.OrdinalIgnoreCase));
 
-        using Stream stream = assembly.GetManifestResourceStream(resource)!;
+        return assembly.GetManifestResourceStream(resource)!;
+    }
+
+    private static void LoadLocale()
+    {
+        using Stream stream = OpenResource("locale.json");
         using var document = JsonDocument.Parse(stream);
 
         foreach (JsonProperty property in document.RootElement.EnumerateObject())
@@ -98,7 +87,7 @@ internal static class Program
         catch (Exception ex)
         {
             Error(TF("terminal.error", ex.Message));
-            PauseExit();
+            Pause("terminal.prompt.exit");
             return 1;
         }
     }
@@ -115,13 +104,13 @@ internal static class Program
         if (!File.Exists(gameExePath) || !File.Exists(archivePath))
         {
             Error(T("check.root"));
-            PauseExit();
+            Pause("terminal.prompt.exit");
             return 1;
         }
 
         if (!CheckGameIni(gameDir))
         {
-            PauseExit();
+            Pause("terminal.prompt.exit");
             return 1;
         }
 
@@ -159,7 +148,7 @@ internal static class Program
             if (IsGameRunning(gameDir))
             {
                 Error(T("check.running"));
-                PauseMenu();
+                Pause("terminal.prompt.pause");
                 continue;
             }
 
@@ -179,7 +168,7 @@ internal static class Program
                 Error(TF("terminal.error", ex.Message));
             }
 
-            PauseMenu();
+            Pause("terminal.prompt.pause");
         }
     }
 
@@ -201,7 +190,7 @@ internal static class Program
         return choice.ToString();
     }
 
-    private static void PauseMenu()
+    private static void Pause(string key)
     {
         if (Console.IsInputRedirected)
         {
@@ -209,19 +198,7 @@ internal static class Program
         }
 
         Console.WriteLine();
-        Console.WriteLine(T("terminal.prompt.pause"));
-        try { Console.ReadKey(true); } catch { }
-    }
-
-    private static void PauseExit()
-    {
-        if (Console.IsInputRedirected)
-        {
-            return;
-        }
-
-        Console.WriteLine();
-        Console.WriteLine(T("terminal.prompt.exit"));
+        Console.WriteLine(T(key));
         try { Console.ReadKey(true); } catch { }
     }
 
@@ -252,31 +229,19 @@ internal static class Program
             return;
         }
 
-        int replaceIndex = -1;
-        int insertIndex = -1;
-        ScriptId newId;
-
-        if (existingIndex >= 0)
-        {
-            replaceIndex = existingIndex;
-            newId = scripts.Entries[existingIndex].Id;
-            Info(T("install.update"));
-        }
-        else
-        {
-            insertIndex = mainIndex;
-            newId = scripts.CreateNewId();
-            Info(T("install.add"));
-        }
+        bool isUpdate = existingIndex >= 0;
+        int newId = isUpdate ? scripts.Entries[existingIndex].Id : scripts.CreateNewId();
+        Info(T(isUpdate ? "install.update" : "install.add"));
 
         byte[] scriptCode = LoadScript();
 
-        byte[] newScripts = ScriptsFile.Build(
-            scriptsData, scripts, replaceIndex, insertIndex, newId, ScriptTitle, scriptCode);
+        byte[] newScripts = isUpdate
+            ? ScriptsFile.Replace(scriptsData, scripts, existingIndex, newId, ScriptTitle, scriptCode)
+            : ScriptsFile.Insert(scriptsData, scripts, mainIndex, newId, ScriptTitle, scriptCode);
 
         // Verify the modified Marshal stream before touching the archive.
         var verifyScripts = ScriptsFile.Read(newScripts);
-        int expectedCount = scripts.Entries.Count + (replaceIndex < 0 ? 1 : 0);
+        int expectedCount = scripts.Entries.Count + (isUpdate ? 0 : 1);
         if (verifyScripts.Entries.Count != expectedCount)
         {
             throw new InvalidDataException("Modified Scripts.rvdata2 has an unexpected entry count.");
@@ -337,12 +302,6 @@ internal static class Program
         if (!File.Exists(backupPath))
         {
             Error(TF("uninstall.backup.missing", backupPath));
-            return;
-        }
-
-        if (!Rgss3aArchive.IsArchive(backupPath))
-        {
-            Error(T("uninstall.backup.invalid"));
             return;
         }
 
@@ -411,19 +370,10 @@ internal static class Program
 
     private static byte[] LoadScript()
     {
-        var assembly = Assembly.GetExecutingAssembly();
-        string resource = assembly.GetManifestResourceNames()
-            .First(name => name.EndsWith("options.rb", StringComparison.OrdinalIgnoreCase));
-
-        using Stream stream = assembly.GetManifestResourceStream(resource)!;
+        using Stream stream = OpenResource("options.rb");
         using var memory = new MemoryStream();
         stream.CopyTo(memory);
         byte[] data = memory.ToArray();
-
-        if (data.Length >= 3 && data[0] == 0xEF && data[1] == 0xBB && data[2] == 0xBF)
-        {
-            data = data[3..];
-        }
 
         string code = Encoding.UTF8.GetString(data);
         var builder = new StringBuilder();
@@ -453,60 +403,23 @@ internal static class Program
     private static bool CheckGameIni(string gameDir)
     {
         string ini = Path.Combine(gameDir, "Game.ini");
-        try
-        {
-            if (File.Exists(ini))
-            {
-                // Latin1 preserves the raw bytes, including CP932 title characters.
-                string text = Encoding.Latin1.GetString(File.ReadAllBytes(ini));
-                string? titleLine = text.Split('\n')
-                    .Select(line => line.TrimEnd('\r'))
-                    .FirstOrDefault(line => line.StartsWith("Title=", StringComparison.OrdinalIgnoreCase));
-                if (titleLine != null)
-                {
-                    string title = titleLine[6..].TrimEnd(' ', '\t', '\u0081', '\u0040');
+        string? titleLine = File.Exists(ini)
+            ? File.ReadLines(ini).FirstOrDefault(line => line.StartsWith("Title=", StringComparison.OrdinalIgnoreCase))
+            : null;
 
-                    if (title.StartsWith(GameTitle, StringComparison.OrdinalIgnoreCase) &&
-                        ExtractGameNumber(title).Equals(ToRoman(GameGeneration), StringComparison.OrdinalIgnoreCase))
-                    {
-                        return true;
-                    }
-                }
-            }
-        }
-        catch
+        if (titleLine != null)
         {
+            string title = titleLine[6..].Trim();
+            if (GameGeneration == 1
+                ? title.Equals(GameTitle, StringComparison.OrdinalIgnoreCase)
+                : title.StartsWith(GameTitle + " II", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
         }
 
         Error(TF("check.ini", GameName));
         return false;
-    }
-
-    private static string ExtractGameNumber(string title)
-    {
-        string rest = title[GameTitle.Length..].TrimStart(' ', '\t', '\u0081', '\u0040');
-        if (rest.Length == 0)
-        {
-            return "";
-        }
-
-        if (rest.Length >= 2 && rest[0] == '\u0087' && rest[1] >= '\u0054' && rest[1] <= '\u005D')
-        {
-            return RomanNumerals[rest[1] - '\u0054'];
-        }
-
-        int length = 0;
-        while (length < rest.Length && "IVXLCDM".Contains(char.ToUpperInvariant(rest[length])))
-        {
-            length++;
-        }
-
-        if (length == 0)
-        {
-            return "?";
-        }
-
-        return rest[..length].ToUpperInvariant();
     }
 
     private static bool IsGameRunning(string gameDir)
@@ -560,12 +473,10 @@ internal static class Program
 internal sealed class ArchiveEntry
 {
     public required string Name;
-    public uint Offset;
     public uint OriginalOffset;
     public uint Size;
     public uint Key;
     public required byte[] EncryptedName;
-    public byte[]? NewEncryptedData;
 }
 
 internal sealed class Rgss3aArchive
@@ -628,7 +539,6 @@ internal sealed class Rgss3aArchive
             archive.Entries.Add(new ArchiveEntry
             {
                 Name = Encoding.UTF8.GetString(nameBytes),
-                Offset = offset,
                 OriginalOffset = offset,
                 Size = size,
                 Key = key,
@@ -637,24 +547,6 @@ internal sealed class Rgss3aArchive
         }
 
         return archive;
-    }
-
-    public static bool IsArchive(string path)
-    {
-        try
-        {
-            using var stream = File.OpenRead(path);
-            Span<byte> header = stackalloc byte[8];
-            stream.ReadExactly(header);
-
-            return header[0] == (byte)'R' && header[1] == (byte)'G' && header[2] == (byte)'S' &&
-                   header[3] == (byte)'S' && header[4] == (byte)'A' && header[5] == (byte)'D' &&
-                   header[6] == 0 && header[7] == 3;
-        }
-        catch
-        {
-            return false;
-        }
     }
 
     public byte[] Extract(string archivePath, ArchiveEntry entry)
@@ -685,9 +577,9 @@ internal sealed class Rgss3aArchive
         ArchiveEntry target,
         byte[] newPlainData)
     {
-        target.Key = RandomKey();
-        target.Size = (uint)newPlainData.Length;
-        target.NewEncryptedData = XorPayload(newPlainData, target.Key);
+        uint newKey = RandomKey();
+        uint newSize = (uint)newPlainData.Length;
+        byte[] newEncryptedData = XorPayload(newPlainData, newKey);
 
         long tocSize = 8 + 4 + 16;
         foreach (var entry in archive.Entries)
@@ -695,6 +587,7 @@ internal sealed class Rgss3aArchive
             tocSize += 16 + entry.EncryptedName.Length;
         }
 
+        var offsets = new List<uint>(archive.Entries.Count);
         long offset = tocSize;
         foreach (var entry in archive.Entries)
         {
@@ -702,8 +595,9 @@ internal sealed class Rgss3aArchive
             {
                 throw new InvalidOperationException("Archive exceeds 4 GiB; RGSS3A cannot address it.");
             }
-            entry.Offset = (uint)offset;
-            offset += entry.Size;
+
+            offsets.Add((uint)offset);
+            offset += ReferenceEquals(entry, target) ? newSize : entry.Size;
         }
 
         if (offset > uint.MaxValue)
@@ -713,51 +607,57 @@ internal sealed class Rgss3aArchive
 
         using var source = File.OpenRead(sourcePath);
         using var destination = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None);
+        using var writer = new BinaryWriter(destination, Encoding.UTF8, leaveOpen: true);
 
-        WriteAscii(destination, "RGSSAD\0");
-        destination.WriteByte(3);
-        WriteU32(destination, archive.Seed);
+        writer.Write(Encoding.ASCII.GetBytes("RGSSAD\0"));
+        writer.Write((byte)3);
+        writer.Write(archive.Seed);
 
-        foreach (var entry in archive.Entries)
+        for (int i = 0; i < archive.Entries.Count; i++)
         {
-            WriteU32(destination, entry.Offset ^ archive.MasterKey);
-            WriteU32(destination, entry.Size ^ archive.MasterKey);
-            WriteU32(destination, entry.Key ^ archive.MasterKey);
-            WriteU32(destination, (uint)entry.EncryptedName.Length ^ archive.MasterKey);
-            destination.Write(entry.EncryptedName);
+            ArchiveEntry entry = archive.Entries[i];
+            uint size = ReferenceEquals(entry, target) ? newSize : entry.Size;
+            uint key = ReferenceEquals(entry, target) ? newKey : entry.Key;
+
+            writer.Write(offsets[i] ^ archive.MasterKey);
+            writer.Write(size ^ archive.MasterKey);
+            writer.Write(key ^ archive.MasterKey);
+            writer.Write((uint)entry.EncryptedName.Length ^ archive.MasterKey);
+            writer.Write(entry.EncryptedName);
         }
 
-        WriteU32(destination, 0 ^ archive.MasterKey);
-        WriteU32(destination, 0 ^ archive.MasterKey);
-        WriteU32(destination, 0 ^ archive.MasterKey);
-        WriteU32(destination, 0 ^ archive.MasterKey);
+        for (int i = 0; i < 4; i++)
+        {
+            writer.Write(0u ^ archive.MasterKey);
+        }
 
         byte[] buffer = new byte[1024 * 1024];
-        foreach (var entry in archive.Entries)
+        for (int i = 0; i < archive.Entries.Count; i++)
         {
-            if (destination.Position != entry.Offset)
+            ArchiveEntry entry = archive.Entries[i];
+            if (destination.Position != offsets[i])
             {
                 throw new InvalidOperationException($"Offset mismatch while writing {entry.Name}.");
             }
 
             if (ReferenceEquals(entry, target))
             {
-                destination.Write(entry.NewEncryptedData!);
+                destination.Write(newEncryptedData);
+                continue;
             }
-            else
+
+            source.Position = entry.OriginalOffset;
+            long remaining = entry.Size;
+            while (remaining > 0)
             {
-                source.Position = entry.OriginalOffset;
-                long remaining = entry.Size;
-                while (remaining > 0)
+                int n = source.Read(buffer, 0, (int)Math.Min(buffer.Length, remaining));
+                if (n == 0)
                 {
-                    int n = source.Read(buffer, 0, (int)Math.Min(buffer.Length, remaining));
-                    if (n == 0)
-                    {
-                        throw new InvalidDataException($"Unexpected end of source archive while copying {entry.Name}.");
-                    }
-                    destination.Write(buffer, 0, n);
-                    remaining -= n;
+                    throw new InvalidDataException($"Unexpected end of source archive while copying {entry.Name}.");
                 }
+
+                destination.Write(buffer, 0, n);
+                remaining -= n;
             }
         }
     }
@@ -766,9 +666,7 @@ internal sealed class Rgss3aArchive
     {
         Span<byte> bytes = stackalloc byte[4];
         Random.Shared.NextBytes(bytes);
-        uint key = BitConverter.ToUInt32(bytes);
-
-        return key == 0 ? 0x12345678u : key;
+        return BitConverter.ToUInt32(bytes);
     }
 
     private static byte[] XorPayload(byte[] data, uint key)
@@ -792,45 +690,15 @@ internal sealed class Rgss3aArchive
 
         return result;
     }
-
-    private static void WriteU32(Stream stream, uint value)
-    {
-        stream.WriteByte((byte)value);
-        stream.WriteByte((byte)(value >> 8));
-        stream.WriteByte((byte)(value >> 16));
-        stream.WriteByte((byte)(value >> 24));
-    }
-
-    private static void WriteAscii(Stream stream, string text)
-    {
-        foreach (char c in text)
-        {
-            stream.WriteByte((byte)c);
-        }
-    }
 }
 
 //==============================================================================
 // Ruby Marshal helpers for Scripts.rvdata2
 //==============================================================================
-internal readonly record struct ScriptId(bool IsString, long Number)
-{
-    public object ToMarshalValue()
-    {
-        if (IsString)
-        {
-            return new Utf8String(Encoding.UTF8.GetBytes(Number.ToString(CultureInfo.InvariantCulture)));
-        }
-
-        return checked((int)Number);
-    }
-}
-
 internal sealed class ScriptEntry
 {
-    public ScriptId Id;
+    public int Id;
     public string Title = "";
-    public byte[] Compressed = Array.Empty<byte>();
     public int RawStart;
     public int RawEnd;
 }
@@ -857,20 +725,19 @@ internal sealed class ScriptsFile
             object? value = reader.ReadValue();
             int end = reader.Position;
 
-            if (value is not List<object?> item || item.Count < 3)
+            if (value is not List<object?> item || item.Count != 3)
             {
                 throw new InvalidDataException($"Script entry {i} is not a 3-element array.");
             }
-            if (item[1] is not byte[] titleBytes || item[2] is not byte[] compressed)
+            if (item[1] is not byte[] titleBytes)
             {
-                throw new InvalidDataException($"Script entry {i} has invalid title or code type.");
+                throw new InvalidDataException($"Script entry {i} has an invalid title.");
             }
 
             result.Entries.Add(new ScriptEntry
             {
                 Id = ParseId(item[0], i),
                 Title = Encoding.UTF8.GetString(titleBytes),
-                Compressed = compressed,
                 RawStart = start,
                 RawEnd = end,
             });
@@ -884,56 +751,46 @@ internal sealed class ScriptsFile
         return result;
     }
 
-    private static ScriptId ParseId(object? value, int index)
+    private static int ParseId(object? value, int index)
     {
-        return value switch
-        {
-            int number => new ScriptId(false, number),
-            byte[] bytes => ParseStringId(bytes, index),
-            _ => throw new InvalidDataException(
-                $"Script entry {index} has unsupported ID type: {value?.GetType().Name ?? "null"}"),
-        };
+        return value is int number
+            ? number
+            : throw new InvalidDataException($"Script entry {index} has an invalid ID type.");
     }
 
-    private static ScriptId ParseStringId(byte[] bytes, int index)
+    public int CreateNewId()
     {
-        string text = Encoding.UTF8.GetString(bytes);
-        if (!long.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out long number))
-        {
-            throw new InvalidDataException($"Script entry {index} has a non-numeric string ID: {text}");
-        }
-
-        return new ScriptId(true, number);
+        return Entries.Max(e => e.Id) + 1;
     }
 
-    public ScriptId CreateNewId()
+    public static byte[] Replace(
+        byte[] original,
+        ScriptsFile scripts,
+        int index,
+        int id,
+        string title,
+        byte[] codeUtf8)
     {
-        if (Entries.Count == 0)
-        {
-            return new ScriptId(false, 1);
-        }
-
-        bool isString = Entries[0].Id.IsString;
-        if (Entries.Any(e => e.Id.IsString != isString))
-        {
-            throw new InvalidDataException("Scripts.rvdata2 mixes integer and string script IDs.");
-        }
-
-        long max = Entries.Max(e => e.Id.Number);
-        if (max == long.MaxValue || (!isString && max >= int.MaxValue))
-        {
-            throw new InvalidDataException("Script ID space exhausted.");
-        }
-
-        return new ScriptId(isString, max + 1);
+        return Build(original, scripts, index, -1, id, title, codeUtf8);
     }
 
-    public static byte[] Build(
+    public static byte[] Insert(
+        byte[] original,
+        ScriptsFile scripts,
+        int index,
+        int id,
+        string title,
+        byte[] codeUtf8)
+    {
+        return Build(original, scripts, -1, index, id, title, codeUtf8);
+    }
+
+    private static byte[] Build(
         byte[] original,
         ScriptsFile scripts,
         int replaceIndex,
         int insertIndex,
-        ScriptId newId,
+        int id,
         string title,
         byte[] codeUtf8)
     {
@@ -941,7 +798,7 @@ internal sealed class ScriptsFile
 
         var newEntry = new List<object?>
         {
-            newId.ToMarshalValue(),
+            id,
             new Utf8String(Encoding.UTF8.GetBytes(title)),
             new Utf8String(compressed),
         };
@@ -969,11 +826,6 @@ internal sealed class ScriptsFile
 
             var entry = scripts.Entries[i];
             output.Write(original, entry.RawStart, entry.RawEnd - entry.RawStart);
-        }
-
-        if (replaceIndex < 0 && insertIndex >= scripts.Entries.Count)
-        {
-            output.Write(newEntryBytes);
         }
 
         return output.ToArray();
@@ -1211,22 +1063,9 @@ internal static class MarshalWriter
     {
         switch (value)
         {
-            case null:
-                stream.WriteByte((byte)'0');
-                break;
-            case bool b:
-                stream.WriteByte((byte)(b ? 'T' : 'F'));
-                break;
-
             case int i:
                 stream.WriteByte((byte)'i');
                 stream.Write(EncodeFixnum(i));
-                break;
-
-            case byte[] bytes:
-                stream.WriteByte((byte)'"');
-                stream.Write(EncodeFixnum(bytes.Length));
-                stream.Write(bytes);
                 break;
 
             case Utf8String utf8:
@@ -1243,13 +1082,6 @@ internal static class MarshalWriter
                 stream.WriteByte((byte)'T');
                 break;
 
-            case Symbol symbol:
-                stream.WriteByte((byte)':');
-                byte[] name = Encoding.UTF8.GetBytes(symbol.Name);
-                stream.Write(EncodeFixnum(name.Length));
-                stream.Write(name);
-                break;
-
             case List<object?> list:
                 stream.WriteByte((byte)'[');
                 stream.Write(EncodeFixnum(list.Count));
@@ -1262,7 +1094,7 @@ internal static class MarshalWriter
                 break;
 
             default:
-                throw new NotSupportedException($"Cannot serialize {value.GetType()}.");
+                throw new NotSupportedException($"Cannot serialize {value?.GetType().Name ?? "null"}.");
         }
     }
 }

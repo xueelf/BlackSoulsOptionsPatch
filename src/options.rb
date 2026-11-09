@@ -1,4 +1,3 @@
-
 module BSOPTS
   RESOLUTIONS = [
     "640x480",
@@ -261,8 +260,6 @@ module BSOPTS
       window_height = client_height + border_height
       x = area[0] + (area[2] - area[0] - window_width) / 2
       y = area[1] + (area[3] - area[1] - window_height) / 2
-      x = area[0] if x < area[0]
-      y = area[1] if y < area[1]
       BSWin32::SET_WINDOW_POS.call(handle, 0, x, y, window_width, window_height,
                                    SWP_NOZORDER | SWP_NOACTIVATE) != 0
     rescue
@@ -318,14 +315,12 @@ module BSOPTS
       false
     end
 
-    def start_settings(font = nil)
+    def start_settings(font)
       @settings_font = duplicate_font(font)
       SceneManager.call(Scene_BSOptions)
     end
 
     def duplicate_font(font)
-      return nil unless font
-
       copy = Font.new
       copy.name = font.name
       copy.size = font.size
@@ -435,7 +430,7 @@ class Window_BSOptions < Window_Command
 
   VOLUME_KEYS = [:bgm, :bgs, :me, :se]
 
-  def initialize(x, y, font = nil)
+  def initialize(x, y, font)
     @custom_font = font
     @layout_ready = false
 
@@ -459,12 +454,7 @@ class Window_BSOptions < Window_Command
     return if @layout_ready
 
     bitmap = Bitmap.new(1, 1)
-    if @custom_font
-      bitmap.font = @custom_font
-    else
-      bitmap.font.name = Font.default_name
-      bitmap.font.size = Font.default_size
-    end
+    bitmap.font = @custom_font
 
     labels = @list.map { |item| item[:name].to_s }
     values = BSOPTS::RESOLUTIONS.map { |resolution| resolution.sub("x", " x ") }
@@ -492,7 +482,7 @@ class Window_BSOptions < Window_Command
   def draw_item(index)
     rect = item_rect(index)
 
-    contents.font = @custom_font if @custom_font
+    contents.font = @custom_font
     change_color(normal_color)
     draw_text(rect.x + 4, rect.y, @label_width, line_height, command_name(index))
     draw_text(rect.x + 4 + @label_width + 8, rect.y,
@@ -573,15 +563,8 @@ class Scene_BSOptions < Scene_Base
   end
 
   def create_background
-    @background_bitmap = SceneManager.background_bitmap
-    unless @background_bitmap
-      @background_bitmap = Bitmap.new(Graphics.width, Graphics.height)
-      @background_bitmap.fill_rect(@background_bitmap.rect, Color.new(0, 0, 0))
-      @owns_background_bitmap = true
-    end
-
     @background_sprite = Sprite.new
-    @background_sprite.bitmap = @background_bitmap
+    @background_sprite.bitmap = SceneManager.background_bitmap
     @background_sprite.color.set(16, 16, 16, 128)
   end
 
@@ -598,16 +581,7 @@ class Scene_BSOptions < Scene_Base
   end
 
   def dispose_background
-    if @background_sprite
-      @background_sprite.dispose
-      @background_sprite = nil
-    end
-
-    if @owns_background_bitmap && @background_bitmap && !@background_bitmap.disposed?
-      @background_bitmap.dispose
-    end
-
-    @background_bitmap = nil
+    @background_sprite.dispose
   end
 end
 
@@ -620,7 +594,7 @@ unless Window_TitleCommand.method_defined?(:bs_options_make_command_list)
     def make_command_list
       bs_options_make_command_list
 
-      indent = @list.first[:name].to_s[/\A */].to_s
+      indent = @list.first[:name][/\A */]
       @list.insert(@list.size - 1,
                    {:name => indent + BSOPTS::TEXT["options.label.title"], :symbol => :bs_options,
                     :enabled => true, :ext => nil})
@@ -643,6 +617,17 @@ unless Scene_Title.method_defined?(:bs_options_create_command_window)
       bs_options_create_command_window
 
       @command_window.set_handler(:bs_options, method(:command_bs_options))
+    end
+
+    alias_method :bs_options_start, :start
+    def start
+      bs_options_start
+
+      BSOPTS.apply_window
+      if BSOPTS.return_to_title_options
+        @command_window.select_symbol(:bs_options)
+        BSOPTS.return_to_title_options = false
+      end
     end
   end
 end
@@ -683,24 +668,6 @@ unless Scene_Menu.method_defined?(:bs_options_create_command_window)
       bs_options_create_command_window
 
       @command_window.set_handler(:bs_options, method(:command_bs_options))
-    end
-  end
-end
-
-#==============================================================================
-# Apply the saved window size once the game window really exists
-#==============================================================================
-unless Scene_Title.method_defined?(:bs_options_start)
-  class Scene_Title
-    alias_method :bs_options_start, :start
-    def start
-      bs_options_start
-
-      BSOPTS.apply_window
-      if BSOPTS.return_to_title_options
-        @command_window.select_symbol(:bs_options)
-        BSOPTS.return_to_title_options = false
-      end
     end
   end
 end
