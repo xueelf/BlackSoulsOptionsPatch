@@ -187,6 +187,31 @@ module BSOPTS
       save_config
     end
 
+    def battle_log
+      @battle_log ||= []
+    end
+
+    def reset_battle_log
+      @battle_log = []
+    end
+
+    def add_battle_log(text)
+      return if text.empty?
+      return if text == "-" && battle_log.last == "-"
+
+      battle_log << text
+    end
+
+    def replace_battle_log(text)
+      return if text.empty?
+
+      if battle_log.empty?
+        add_battle_log(text)
+      else
+        battle_log[-1] = text
+      end
+    end
+
     def reset
       @config = DEFAULTS.dup
       save_config
@@ -668,6 +693,196 @@ unless Scene_Menu.method_defined?(:bs_options_create_command_window)
       bs_options_create_command_window
 
       @command_window.set_handler(:bs_options, method(:command_bs_options))
+    end
+  end
+end
+
+#==============================================================================
+# Battle log
+#==============================================================================
+class Window_CombatLog < Window_Selectable
+  # item_max is the number of visible rows, not the total battle log size.
+  # @top_line is the index of the first visible line in BSOPTS.battle_log.
+  def initialize
+    super(0, 0, Graphics.width, Graphics.height)
+    self.z = 300
+    self.visible = false
+    @top_line = 0
+    refresh
+  end
+
+  def battle_log
+    BSOPTS.battle_log
+  end
+
+  def visible_line_number
+    (height - standard_padding * 2) / item_height
+  end
+
+  def item_max
+    [battle_log.size, visible_line_number].min
+  end
+
+  def draw_item(index)
+    text = battle_log[@top_line + index]
+    rect = item_rect_for_text(index)
+    if text == "-"
+      draw_horz_line(rect.y)
+    else
+      draw_text_ex(rect.x, rect.y, text)
+    end
+  end
+
+  def draw_horz_line(y)
+    line_y = y + line_height / 2 - 1
+    contents.fill_rect(4, line_y, contents_width - 8, 2, line_colour)
+  end
+
+  def line_colour
+    colour = text_color(0)
+    colour.alpha = 48
+    colour
+  end
+
+  def cursor_down(wrap = false)
+    return if item_max <= 1
+
+    if @index < item_max - 1
+      super
+    elsif @top_line + item_max < battle_log.size
+      scroll_to(@top_line + 1)
+    elsif wrap
+      @top_line = 0
+      select(0)
+      refresh
+    end
+  end
+
+  def cursor_up(wrap = false)
+    return if item_max <= 1
+
+    if @index > 0
+      super
+    elsif @top_line > 0
+      scroll_to(@top_line - 1)
+    elsif wrap
+      @top_line = [battle_log.size - item_max, 0].max
+      select(item_max - 1)
+      refresh
+    end
+  end
+
+  def cursor_pagedown
+    scroll_to(@top_line + item_max)
+  end
+
+  def cursor_pageup
+    scroll_to(@top_line - item_max)
+  end
+
+  def show
+    super
+    @top_line = [battle_log.size - visible_line_number, 0].max
+    # Keep row 0 selected when the log is empty, matching Window_ItemList.
+    @index = [item_max - 1, 0].max
+    refresh
+    activate
+  end
+
+  def hide
+    deactivate
+    super
+  end
+
+  private
+
+  def scroll_to(top_line)
+    top_line = [[top_line, 0].max, [battle_log.size - item_max, 0].max].min
+    return if top_line == @top_line
+
+    @top_line = top_line
+    refresh
+    Sound.play_cursor
+  end
+end
+
+unless Window_BattleLog.method_defined?(:bs_options_add_text)
+  class Window_BattleLog
+    alias_method :bs_options_add_text, :add_text
+    def add_text(text)
+      BSOPTS.add_battle_log(text)
+      bs_options_add_text(text)
+    end
+
+    alias_method :bs_options_replace_text, :replace_text
+    def replace_text(text)
+      BSOPTS.replace_battle_log(text)
+      bs_options_replace_text(text)
+    end
+  end
+end
+
+unless Window_ActorCommand.method_defined?(:bs_options_make_command_list)
+  class Window_ActorCommand
+    alias_method :bs_options_make_command_list, :make_command_list
+    def make_command_list
+      bs_options_make_command_list
+      if @actor
+        add_command([BSOPTS::TEXT["battle.log"], 0], :battle_log)
+        set_position if BattleCommand_Custom::ACTOR_MODE >= 2
+      end
+    end
+
+    def cursor_down(wrap = false)
+      return if item_max <= 1
+      return if @bs_options_cursor_frame == Graphics.frame_count
+
+      @bs_options_cursor_frame = Graphics.frame_count
+      index = self.index + 1
+      index = 0 if index >= item_max && wrap
+      select(index) if index < item_max
+    end
+
+    def cursor_up(wrap = false)
+      return if item_max <= 1
+      return if @bs_options_cursor_frame == Graphics.frame_count
+
+      @bs_options_cursor_frame = Graphics.frame_count
+      index = self.index - 1
+      index = item_max - 1 if index < 0 && wrap
+      select(index) if index >= 0
+    end
+  end
+end
+
+unless Scene_Battle.method_defined?(:bs_options_create_log_window)
+  class Scene_Battle
+    alias_method :bs_options_create_log_window, :create_log_window
+    def create_log_window
+      BSOPTS.reset_battle_log
+      bs_options_create_log_window
+    end
+
+    alias_method :bs_options_create_all_windows, :create_all_windows
+    def create_all_windows
+      bs_options_create_all_windows
+      create_combatlog_window
+      @actor_command_window.set_handler(:battle_log, method(:open_combatlog))
+    end
+
+    def create_combatlog_window
+      @combatlog_window = Window_CombatLog.new
+      @combatlog_window.set_handler(:cancel, method(:close_combatlog))
+    end
+
+    def open_combatlog
+      @actor_command_window.deactivate
+      @combatlog_window.show
+    end
+
+    def close_combatlog
+      @combatlog_window.hide
+      @actor_command_window.activate
     end
   end
 end

@@ -1,6 +1,6 @@
 # BlackSoulsQoLPatch
 
-游戏 [BLACK SOULS](https://www.dlsite.com/maniax/work/=/product_id/RJ259844.html) 与 [BLACK SOULS II](https://www.dlsite.com/maniax/work/=/product_id/RJ280293.html) 的非官方优化补丁，在程序内添加「选项」界面。可修改窗口分辨率、全屏显示，以及提供独立的 BGM、BGS、ME、SE 音量控制。
+游戏 [BLACK SOULS](https://www.dlsite.com/maniax/work/=/product_id/RJ259844.html) 与 [BLACK SOULS II](https://www.dlsite.com/maniax/work/=/product_id/RJ280293.html) 的非官方 QoL 优化补丁，在程序内添加「选项」界面和战斗日志。可修改窗口分辨率、全屏显示，以及提供独立的 BGM、BGS、ME、SE 音量控制。
 
 使用其他语言阅读：[English](./README.md) | 中文 | [日本語](./README.ja.md)
 
@@ -11,6 +11,7 @@
 - 无边框全屏：全屏会将游戏原本的 4:3 画面强行拉伸到屏幕比例。
 - 音量控制：独立的 BGM、BGS、ME、SE 音量控制。
 - 奔跑模式：默认关闭。开启后角色默认奔跑，按住 Shift 走路。
+- 战斗日志：在战斗指令中选择「日志」，可查看本场战斗的历史记录。
 - DPI 缩放：为 `Game.exe` 启用 Windows 高 DPI 兼容性，避免系统缩放导致画面拉伸。
 - 配置持久化：设置会保存在游戏目录的 `Options.ini` 文件中。
 

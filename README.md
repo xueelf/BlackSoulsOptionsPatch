@@ -1,6 +1,6 @@
 # BlackSoulsQoLPatch
 
-An unofficial patch for [BLACK SOULS](https://www.dlsite.com/maniax/work/=/product_id/RJ251629.html) and [BLACK SOULS II](https://www.dlsite.com/maniax/work/=/product_id/RJ293183.html), which adds an in-game Options screen. You can change the window resolution and fullscreen mode, and adjust the volume of BGM, BGS, ME, and SE independently.
+An unofficial QoL patch for [BLACK SOULS](https://www.dlsite.com/maniax/work/=/product_id/RJ251629.html) and [BLACK SOULS II](https://www.dlsite.com/maniax/work/=/product_id/RJ293183.html), which adds an in-game Options screen, a battle log, and more. You can change the window resolution and fullscreen mode, and adjust the volume of BGM, BGS, ME, and SE independently.
 
 Read this in other languages: English | [中文](./README.zh.md) | [日本語](./README.ja.md)
 
@@ -11,6 +11,7 @@ Read this in other languages: English | [中文](./README.zh.md) | [日本語](.
 - Borderless fullscreen: fullscreen stretches the game's original 4:3 image to the screen aspect ratio.
 - Volume controls: independent BGM, BGS, ME, and SE volume controls.
 - Dash behavior: off by default. When enabled, the character dashes by default. Hold Shift to walk.
+- Battle log: select "Log" from the battle commands to review the current battle's history.
 - DPI scaling: enables Windows high-DPI compatibility for `Game.exe` to prevent stretching under display scaling.
 - Persistent settings: settings are saved in the `Options.ini` file in the game directory.
 

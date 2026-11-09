@@ -1,6 +1,6 @@
 # BlackSoulsQoLPatch
 
-ゲーム [BLACK SOULS](https://www.dlsite.com/maniax/work/=/product_id/RJ203687.html) と [BLACK SOULS II](https://www.dlsite.com/maniax/work/=/product_id/RJ237469.html) の非公式の最適化パッチで、プログラム内に設定画面を追加します。ウィンドウサイズと全画面表示を変更でき、BGM、BGS、ME、SE の音量を個別に調整できます。
+ゲーム [BLACK SOULS](https://www.dlsite.com/maniax/work/=/product_id/RJ203687.html) と [BLACK SOULS II](https://www.dlsite.com/maniax/work/=/product_id/RJ237469.html) の非公式 QoL 最適化パッチで、プログラム内に設定画面や戦闘ログを追加します。ウィンドウサイズと全画面表示を変更でき、BGM、BGS、ME、SE の音量を個別に調整できます。
 
 他の言語で読む：[English](./README.md) | [中文](./README.zh.md) | 日本語
 
@@ -11,6 +11,7 @@
 - ボーダーレス全画面：全画面ではゲーム本来の 4:3 画面を画面比率に合わせて引き伸ばします。
 - 音量調整：BGM、BGS、ME、SE の音量を個別に調整できます。
 - ダッシュ動作：初期状態はオフ。オンにするとキャラクターは通常ダッシュで移動し、Shift キーを押すと歩行します。
+- 戦闘ログ：戦闘コマンドの「ログ」から、現在の戦闘履歴を確認できます。
 - DPI スケーリング：`Game.exe` の Windows 高 DPI 互換性を有効にし、表示スケーリングによる画面の引き伸ばしを防ぎます。
 - 設定の保存：設定はゲームディレクトリの `Options.ini` ファイルに保存されます。
 
