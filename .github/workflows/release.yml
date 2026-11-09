@@ -31,9 +31,4 @@ jobs:
         run: |
           gh release create "${GITHUB_REF_NAME}" \
             --generate-notes \
-            "release/BlackSouls-Options-CN.exe" \
-            "release/BlackSouls-Options-JP.exe" \
-            "release/BlackSouls-Options-EN.exe" \
-            "release/BlackSoulsII-Options-CN.exe" \
-            "release/BlackSoulsII-Options-JP.exe" \
-            "release/BlackSoulsII-Options-EN.exe"
+            release/*.exe
