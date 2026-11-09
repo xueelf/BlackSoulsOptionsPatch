@@ -1,4 +1,4 @@
-# BlackSoulsOptionsPatch
+# BlackSoulsQoLPatch
 
 ゲーム [BLACK SOULS](https://www.dlsite.com/maniax/work/=/product_id/RJ203687.html) と [BLACK SOULS II](https://www.dlsite.com/maniax/work/=/product_id/RJ237469.html) の非公式の最適化パッチで、プログラム内に設定画面を追加します。ウィンドウサイズと全画面表示を変更でき、BGM、BGS、ME、SE の音量を個別に調整できます。
 
@@ -20,15 +20,15 @@
 
 BLACK SOULS：
 
-- 中国語：`BlackSouls-Options-CN.exe`
-- 日本語：`BlackSouls-Options-JP.exe`
-- 英語：`BlackSouls-Options-EN.exe`
+- 中国語：`BlackSouls-QoL-CN.exe`
+- 日本語：`BlackSouls-QoL-JP.exe`
+- 英語：`BlackSouls-QoL-EN.exe`
 
 BLACK SOULS II：
 
-- 中国語：`BlackSoulsII-Options-CN.exe`
-- 日本語：`BlackSoulsII-Options-JP.exe`
-- 英語：`BlackSoulsII-Options-EN.exe`
+- 中国語：`BlackSoulsII-QoL-CN.exe`
+- 日本語：`BlackSoulsII-QoL-JP.exe`
+- 英語：`BlackSoulsII-QoL-EN.exe`
 
 ## 使い方
 

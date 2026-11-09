@@ -22,7 +22,7 @@ for generation_index in "${!generations[@]}"; do
   for locale_index in "${!locales[@]}"; do
     locale="${locales[$locale_index]}"
     locale_name="${locale_names[$locale_index]}"
-    assembly_name="$generation_asset-Options-$locale_name"
+    assembly_name="$generation_asset-QoL-$locale_name"
     output_dir="$stage/BlackSouls-$generation-$locale"
 
     mkdir -p "$output_dir"

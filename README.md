@@ -1,4 +1,4 @@
-# BlackSoulsOptionsPatch
+# BlackSoulsQoLPatch
 
 An unofficial patch for [BLACK SOULS](https://www.dlsite.com/maniax/work/=/product_id/RJ251629.html) and [BLACK SOULS II](https://www.dlsite.com/maniax/work/=/product_id/RJ293183.html), which adds an in-game Options screen. You can change the window resolution and fullscreen mode, and adjust the volume of BGM, BGS, ME, and SE independently.
 
@@ -20,15 +20,15 @@ Download the exe for your game from [GitHub Releases](https://github.com/xueelf/
 
 BLACK SOULS:
 
-- Chinese: `BlackSouls-Options-CN.exe`
-- Japanese: `BlackSouls-Options-JP.exe`
-- English: `BlackSouls-Options-EN.exe`
+- Chinese: `BlackSouls-QoL-CN.exe`
+- Japanese: `BlackSouls-QoL-JP.exe`
+- English: `BlackSouls-QoL-EN.exe`
 
 BLACK SOULS II:
 
-- Chinese: `BlackSoulsII-Options-CN.exe`
-- Japanese: `BlackSoulsII-Options-JP.exe`
-- English: `BlackSoulsII-Options-EN.exe`
+- Chinese: `BlackSoulsII-QoL-CN.exe`
+- Japanese: `BlackSoulsII-QoL-JP.exe`
+- English: `BlackSoulsII-QoL-EN.exe`
 
 ## Usage
 

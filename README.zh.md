@@ -1,4 +1,4 @@
-# BlackSoulsOptionsPatch
+# BlackSoulsQoLPatch
 
 游戏 [BLACK SOULS](https://www.dlsite.com/maniax/work/=/product_id/RJ259844.html) 与 [BLACK SOULS II](https://www.dlsite.com/maniax/work/=/product_id/RJ280293.html) 的非官方优化补丁，在程序内添加「选项」界面。可修改窗口分辨率、全屏显示，以及提供独立的 BGM、BGS、ME、SE 音量控制。
 
@@ -20,15 +20,15 @@
 
 BLACK SOULS：
 
-- 中文：`BlackSouls-Options-CN.exe`
-- 日文：`BlackSouls-Options-JP.exe`
-- 英文：`BlackSouls-Options-EN.exe`
+- 中文：`BlackSouls-QoL-CN.exe`
+- 日文：`BlackSouls-QoL-JP.exe`
+- 英文：`BlackSouls-QoL-EN.exe`
 
 BLACK SOULS II：
 
-- 中文：`BlackSoulsII-Options-CN.exe`
-- 日文：`BlackSoulsII-Options-JP.exe`
-- 英文：`BlackSoulsII-Options-EN.exe`
+- 中文：`BlackSoulsII-QoL-CN.exe`
+- 日文：`BlackSoulsII-QoL-JP.exe`
+- 英文：`BlackSoulsII-QoL-EN.exe`
 
 ## 使用
 

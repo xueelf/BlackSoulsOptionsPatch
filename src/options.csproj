@@ -4,9 +4,9 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <AssemblyName>BlackSouls-Options</AssemblyName>
+    <AssemblyName>BlackSouls-QoL</AssemblyName>
     <Company>Yuki</Company>
-    <Product>Black Souls Options Patch</Product>
+    <Product>Black Souls QoL Patch</Product>
     <Copyright>Copyright © 2026 Yuki &lt;admin@yuki.sh&gt;</Copyright>
     <GameGeneration Condition="'$(GameGeneration)' == ''">1</GameGeneration>
     <GameName Condition="'$(GameGeneration)' == '1'">BLACK SOULS</GameName>
@@ -17,9 +17,9 @@
     <ApplicationIcon Condition="'$(GameGeneration)' == '2'">..\artifacts\icons\BlackSoulsII.ico</ApplicationIcon>
     <RootNamespace>OptionsPatch</RootNamespace>
     <Locale Condition="'$(Locale)' == ''">zh</Locale>
-    <AssemblyTitle Condition="'$(Locale)' == 'zh'">游戏 $(GameName) 的非官方优化补丁，在程序内添加「设置」界面。</AssemblyTitle>
-    <AssemblyTitle Condition="'$(Locale)' == 'ja'">ゲーム $(GameName) の非公式の最適化パッチで、プログラム内に設定画面を追加します。</AssemblyTitle>
-    <AssemblyTitle Condition="'$(Locale)' == 'en'">An unofficial patch for $(GameName) that adds an in-game Options screen.</AssemblyTitle>
+    <AssemblyTitle Condition="'$(Locale)' == 'zh'">游戏 $(GameName) 的非官方 QoL 优化补丁，添加选项界面、战斗日志等功能。</AssemblyTitle>
+    <AssemblyTitle Condition="'$(Locale)' == 'ja'">ゲーム $(GameName) の非公式 QoL 最適化パッチ。設定画面や戦闘ログなどを追加します。</AssemblyTitle>
+    <AssemblyTitle Condition="'$(Locale)' == 'en'">An unofficial QoL patch for $(GameName) that adds an options screen, battle log, and more.</AssemblyTitle>
     <BuildDate>$([System.DateTime]::Now.ToString("yyyy.MM.dd"))</BuildDate>
     <Version>$(BuildDate)</Version>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>

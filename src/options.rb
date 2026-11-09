@@ -102,7 +102,7 @@ module BSOPTS
     def save_config
       begin
         File.open(config_path, "wb") do |file|
-          file.write("# BLACK SOULS options\n")
+          file.write("# BLACK SOULS QoL Patch\n")
           file.write("# This file is re-created automatically.\n")
           file.write("resolution=#{config[:resolution]}\n")
           file.write("fullscreen=#{config[:fullscreen] ? 1 : 0}\n")
@@ -420,7 +420,7 @@ class Window_BSOptions < Window_Command
   COMMAND_KEYS = [
     "options.display.mode",
     "options.display.resolution",
-    "options.always_dash",
+    "options.gameplay.dash",
     "options.audio.bgm",
     "options.audio.bgs",
     "options.audio.me",
@@ -460,8 +460,8 @@ class Window_BSOptions < Window_Command
     values = BSOPTS::RESOLUTIONS.map { |resolution| resolution.sub("x", " x ") }
     values << BSOPTS::TEXT["options.display.mode.fullscreen"]
     values << BSOPTS::TEXT["options.display.mode.window"]
-    values << BSOPTS::TEXT["options.value.on"]
-    values << BSOPTS::TEXT["options.value.off"]
+    values << BSOPTS::TEXT["common.on"]
+    values << BSOPTS::TEXT["common.off"]
     values << "100%"
 
     @label_width = labels.map { |text| bitmap.text_size(text).width }.max + 4
@@ -496,7 +496,7 @@ class Window_BSOptions < Window_Command
     when 1
       BSOPTS.resolution_label
     when 2
-      BSOPTS::TEXT[BSOPTS.config[:always_dash] ? "options.value.on" : "options.value.off"]
+      BSOPTS::TEXT[BSOPTS.config[:always_dash] ? "common.on" : "common.off"]
     when 3..6
       "#{BSOPTS.config[VOLUME_KEYS[index - 3]]}%"
     else

@@ -19,7 +19,8 @@ internal static class Program
     private static readonly string Version = GetVersion();
     private static readonly int GameGeneration = GetGameGeneration();
     private static readonly string GameName = GameGeneration == 1 ? GameTitle : GameTitle + " II";
-    private static readonly string ScriptTitle = GameName + " options";
+    private static readonly string ScriptTitle = GameName + " QoL";
+    private static readonly string LegacyScriptTitle = GameName + " options";
 
     private static readonly Dictionary<string, string> _text = new();
 
@@ -86,15 +87,15 @@ internal static class Program
         }
         catch (Exception ex)
         {
-            Error(TF("terminal.error", ex.Message));
-            Pause("terminal.prompt.exit");
+            Error(TF("installer.terminal.error", ex.Message));
+            Pause("installer.terminal.prompt.exit");
             return 1;
         }
     }
 
     private static int RunMenu()
     {
-        Console.WriteLine(TF("terminal.header", GameName, Version));
+        Console.WriteLine(TF("installer.terminal.header", GameName, Version));
         Console.WriteLine();
 
         string gameDir = AppContext.BaseDirectory;
@@ -103,14 +104,14 @@ internal static class Program
 
         if (!File.Exists(gameExePath) || !File.Exists(archivePath))
         {
-            Error(T("check.root"));
-            Pause("terminal.prompt.exit");
+            Error(T("installer.check.root"));
+            Pause("installer.terminal.prompt.exit");
             return 1;
         }
 
         if (!CheckGameIni(gameDir))
         {
-            Pause("terminal.prompt.exit");
+            Pause("installer.terminal.prompt.exit");
             return 1;
         }
 
@@ -118,13 +119,13 @@ internal static class Program
 
         while (true)
         {
-            Console.WriteLine(TF("terminal.status.dir", gameDir));
-            Console.WriteLine(TF("terminal.status.patch", GetInstallState(backupPath)));
+            Console.WriteLine(TF("installer.terminal.status.dir", gameDir));
+            Console.WriteLine(TF("installer.terminal.status.patch", GetInstallState(backupPath)));
             Console.WriteLine();
-            Console.WriteLine(T("terminal.action.install"));
-            Console.WriteLine(T("terminal.action.uninstall"));
-            Console.WriteLine(T("terminal.action.exit"));
-            Console.Write(T("terminal.prompt.select"));
+            Console.WriteLine(T("installer.terminal.action.install"));
+            Console.WriteLine(T("installer.terminal.action.uninstall"));
+            Console.WriteLine(T("installer.terminal.action.exit"));
+            Console.Write(T("installer.terminal.prompt.select"));
 
             string? choice = ReadMenuChoice();
             Console.WriteLine();
@@ -141,14 +142,14 @@ internal static class Program
 
             if (choice != "1" && choice != "2")
             {
-                Console.WriteLine(T("terminal.prompt.invalid"));
+                Console.WriteLine(T("installer.terminal.prompt.invalid"));
                 continue;
             }
 
             if (IsGameRunning(gameDir))
             {
-                Error(T("check.running"));
-                Pause("terminal.prompt.pause");
+                Error(T("installer.check.running"));
+                Pause("installer.terminal.prompt.pause");
                 continue;
             }
 
@@ -165,16 +166,16 @@ internal static class Program
             }
             catch (Exception ex)
             {
-                Error(TF("terminal.error", ex.Message));
+                Error(TF("installer.terminal.error", ex.Message));
             }
 
-            Pause("terminal.prompt.pause");
+            Pause("installer.terminal.prompt.pause");
         }
     }
 
     private static string GetInstallState(string backupPath)
     {
-        return File.Exists(backupPath) ? T("terminal.status.patch.installed") : T("terminal.status.patch.uninstalled");
+        return File.Exists(backupPath) ? T("installer.terminal.status.patch.installed") : T("installer.terminal.status.patch.uninstalled");
     }
 
     private static string? ReadMenuChoice()
@@ -204,14 +205,14 @@ internal static class Program
 
     private static void Install(string archivePath, string backupPath)
     {
-        Info(T("install.reading"));
+        Info(T("installer.install.reading"));
 
         var archive = Rgss3aArchive.Read(archivePath);
         var scriptsEntry = archive.Entries.FirstOrDefault(e =>
             string.Equals(NormalizeName(e.Name), "Data/Scripts.rvdata2", StringComparison.OrdinalIgnoreCase));
         if (scriptsEntry == null)
         {
-            Error(T("check.archive"));
+            Error(T("installer.check.archive"));
             return;
         }
 
@@ -219,19 +220,20 @@ internal static class Program
         var scripts = ScriptsFile.Read(scriptsData);
 
         int existingIndex = scripts.Entries.FindIndex(e =>
-            e.Title.IndexOf(ScriptTitle, StringComparison.OrdinalIgnoreCase) >= 0);
+            e.Title.IndexOf(ScriptTitle, StringComparison.OrdinalIgnoreCase) >= 0 ||
+            e.Title.IndexOf(LegacyScriptTitle, StringComparison.OrdinalIgnoreCase) >= 0);
 
         int mainIndex = scripts.Entries.FindIndex(e =>
             string.Equals(e.Title.Trim(), "Main", StringComparison.OrdinalIgnoreCase));
         if (mainIndex < 0)
         {
-            Error(T("check.main"));
+            Error(T("installer.check.main"));
             return;
         }
 
         bool isUpdate = existingIndex >= 0;
         int newId = isUpdate ? scripts.Entries[existingIndex].Id : scripts.CreateNewId();
-        Info(T(isUpdate ? "install.update" : "install.add"));
+        Info(T(isUpdate ? "installer.install.update" : "installer.install.add"));
 
         byte[] scriptCode = LoadScript();
 
@@ -260,7 +262,7 @@ internal static class Program
         File.Delete(tempPath);
 
         long archiveSizeMb = (new FileInfo(archivePath).Length + 1024 * 1024 - 1) / (1024 * 1024);
-        Info(TF("install.repack", archiveSizeMb));
+        Info(TF("installer.install.repack", archiveSizeMb));
 
         Rgss3aArchive.Replace(archivePath, tempPath, archive, scriptsEntry, newScripts);
 
@@ -280,28 +282,28 @@ internal static class Program
 
         if (!File.Exists(backupPath))
         {
-            Info(T("install.backup.start"));
+            Info(T("installer.install.backup.start"));
             File.Copy(archivePath, backupPath, overwrite: false);
-            Info(TF("install.backup.saved", backupPath));
+            Info(TF("installer.install.backup.saved", backupPath));
         }
         else
         {
-            Info(TF("install.backup.exists", backupPath));
+            Info(TF("installer.install.backup.exists", backupPath));
         }
 
         File.Move(tempPath, archivePath, overwrite: true);
         AddHighDpiAware(Path.GetDirectoryName(archivePath)!);
 
-        Success(T("install.done"));
+        Success(T("installer.install.done"));
         Console.WriteLine();
-        Console.WriteLine(T("install.next"));
+        Console.WriteLine(T("installer.install.next"));
     }
 
     private static void Uninstall(string archivePath, string backupPath)
     {
         if (!File.Exists(backupPath))
         {
-            Error(TF("uninstall.backup.missing", backupPath));
+            Error(TF("installer.uninstall.backup.missing", backupPath));
             return;
         }
 
@@ -312,7 +314,7 @@ internal static class Program
         File.Delete(optionsPath);
         RemoveHighDpiAware(Path.GetDirectoryName(archivePath)!);
 
-        Success(T("uninstall.done"));
+        Success(T("installer.uninstall.done"));
     }
 
     private static void AddHighDpiAware(string gameDir)
@@ -380,10 +382,10 @@ internal static class Program
 
         builder.AppendLine("module BSOPTS");
         builder.AppendLine("  TEXT = {");
-        foreach (var pair in _text.Where(pair => pair.Key.StartsWith("options.", StringComparison.Ordinal)))
+        foreach (var pair in _text.Where(pair => pair.Key.StartsWith("game.", StringComparison.Ordinal)))
         {
             builder.Append("    \"")
-                .Append(pair.Key)
+                .Append(pair.Key["game.".Length..])
                 .Append("\" => '")
                 .Append(EscapeRuby(pair.Value))
                 .AppendLine("',");
@@ -418,7 +420,7 @@ internal static class Program
             }
         }
 
-        Error(TF("check.ini", GameName));
+        Error(TF("installer.check.ini", GameName));
         return false;
     }
 
