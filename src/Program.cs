@@ -1,9 +1,11 @@
 using System.Diagnostics;
+using System.Globalization;
 using System.IO.Compression;
 using System.Reflection;
 using System.Runtime.Versioning;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Microsoft.Win32;
 
 namespace OptionsPatch;
@@ -17,12 +19,12 @@ internal static class Program
     private const string DpiLayer = "HIGHDPIAWARE";
     private const string CompatLayersKey = @"Software\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers";
     private static readonly string Version = GetVersion();
-    private static readonly int GameGeneration = GetGameGeneration();
-    private static readonly string GameName = GameGeneration == 1 ? GameTitle : GameTitle + " II";
-    private static readonly string ScriptTitle = GameName + " QoL";
-    private static readonly string LegacyScriptTitle = GameName + " options";
-
-    private static readonly Dictionary<string, string> _text = new();
+    private static int _gameGeneration;
+    private static string _gameName = "";
+    private static string _scriptTitle = "";
+    private static string _legacyScriptTitle = "";
+    private static readonly Dictionary<string, string> _installerText = new();
+    private static readonly Dictionary<string, string> _gameText = new();
 
     private static string GetVersion()
     {
@@ -31,24 +33,9 @@ internal static class Program
             .InformationalVersion;
     }
 
-    private static int GetGameGeneration()
-    {
-        var attribute = Assembly.GetExecutingAssembly()
-            .GetCustomAttributes<AssemblyMetadataAttribute>()
-            .FirstOrDefault(a => a.Key == "GameGeneration");
-        string? value = attribute?.Value;
-
-        if (!int.TryParse(value, out int generation) || generation < 1 || generation > 2)
-        {
-            throw new InvalidOperationException($"Invalid GameGeneration metadata: {value ?? "(missing)"}");
-        }
-
-        return generation;
-    }
-
     private static string T(string key)
     {
-        return _text[key];
+        return _installerText[key];
     }
 
     private static string TF(string key, params object[] args)
@@ -56,23 +43,44 @@ internal static class Program
         return string.Format(T(key), args);
     }
 
-    private static Stream OpenResource(string suffix)
+    private static Stream OpenResource(string name)
     {
         var assembly = Assembly.GetExecutingAssembly();
-        string resource = assembly.GetManifestResourceNames()
-            .First(name => name.EndsWith(suffix, StringComparison.OrdinalIgnoreCase));
-
-        return assembly.GetManifestResourceStream(resource)!;
+        return assembly.GetManifestResourceStream(name)
+            ?? throw new InvalidOperationException($"Missing embedded resource: {name}");
     }
 
-    private static void LoadLocale()
+    private static void LoadJsonResource(string name, Dictionary<string, string> target)
     {
-        using Stream stream = OpenResource("locale.json");
+        using Stream stream = OpenResource(name);
         using var document = JsonDocument.Parse(stream);
 
+        target.Clear();
         foreach (JsonProperty property in document.RootElement.EnumerateObject())
         {
-            _text[property.Name] = property.Value.GetString()!;
+            target[property.Name] = property.Value.GetString()!;
+        }
+    }
+
+    private static void LoadInstallerLocale()
+    {
+        string language = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+        if (language != "zh" && language != "ja")
+        {
+            language = "en";
+        }
+
+        LoadJsonResource($"locale.installer.{language}.json", _installerText);
+    }
+
+    private static void LoadGameLocale(int generation, string language)
+    {
+        LoadJsonResource($"locale.game.{language}.json", _gameText);
+
+        // BLACK SOULS II uses OPTIONS on the title screen in Chinese.
+        if (generation == 2 && language == "zh")
+        {
+            _gameText["game.options.label.title"] = "OPTIONS";
         }
     }
 
@@ -82,7 +90,7 @@ internal static class Program
 
         try
         {
-            LoadLocale();
+            LoadInstallerLocale();
             return RunMenu();
         }
         catch (Exception ex)
@@ -95,7 +103,7 @@ internal static class Program
 
     private static int RunMenu()
     {
-        Console.WriteLine(TF("installer.terminal.header", GameName, Version));
+        Console.WriteLine(TF("installer.terminal.header", Version));
         Console.WriteLine();
 
         string gameDir = AppContext.BaseDirectory;
@@ -109,7 +117,7 @@ internal static class Program
             return 1;
         }
 
-        if (!CheckGameIni(gameDir))
+        if (!DetectGame(gameDir))
         {
             Pause("installer.terminal.prompt.exit");
             return 1;
@@ -120,6 +128,7 @@ internal static class Program
         while (true)
         {
             Console.WriteLine(TF("installer.terminal.status.dir", gameDir));
+            Console.WriteLine(TF("installer.terminal.status.game", _gameName));
             Console.WriteLine(TF("installer.terminal.status.patch", GetInstallState(backupPath)));
             Console.WriteLine();
             Console.WriteLine(T("installer.terminal.action.install"));
@@ -218,10 +227,12 @@ internal static class Program
 
         byte[] scriptsData = archive.Extract(archivePath, scriptsEntry);
         var scripts = ScriptsFile.Read(scriptsData);
+        string gameLanguage = DetectGameLanguage(scripts);
+        LoadGameLocale(_gameGeneration, gameLanguage);
 
         int existingIndex = scripts.Entries.FindIndex(e =>
-            e.Title.IndexOf(ScriptTitle, StringComparison.OrdinalIgnoreCase) >= 0 ||
-            e.Title.IndexOf(LegacyScriptTitle, StringComparison.OrdinalIgnoreCase) >= 0);
+            e.Title.IndexOf(_scriptTitle, StringComparison.OrdinalIgnoreCase) >= 0 ||
+            e.Title.IndexOf(_legacyScriptTitle, StringComparison.OrdinalIgnoreCase) >= 0);
 
         int mainIndex = scripts.Entries.FindIndex(e =>
             string.Equals(e.Title.Trim(), "Main", StringComparison.OrdinalIgnoreCase));
@@ -238,8 +249,8 @@ internal static class Program
         byte[] scriptCode = LoadScript();
 
         byte[] newScripts = isUpdate
-            ? ScriptsFile.Replace(scriptsData, scripts, existingIndex, newId, ScriptTitle, scriptCode)
-            : ScriptsFile.Insert(scriptsData, scripts, mainIndex, newId, ScriptTitle, scriptCode);
+            ? ScriptsFile.Replace(scriptsData, scripts, existingIndex, newId, _scriptTitle, scriptCode)
+            : ScriptsFile.Insert(scriptsData, scripts, mainIndex, newId, _scriptTitle, scriptCode);
 
         // Verify the modified Marshal stream before touching the archive.
         var verifyScripts = ScriptsFile.Read(newScripts);
@@ -248,7 +259,7 @@ internal static class Program
         {
             throw new InvalidDataException("Modified Scripts.rvdata2 has an unexpected entry count.");
         }
-        if (!verifyScripts.Entries.Any(e => e.Title.IndexOf(ScriptTitle, StringComparison.OrdinalIgnoreCase) >= 0))
+        if (!verifyScripts.Entries.Any(e => e.Title.IndexOf(_scriptTitle, StringComparison.OrdinalIgnoreCase) >= 0))
         {
             throw new InvalidDataException("Patch script missing from modified Scripts.rvdata2.");
         }
@@ -275,7 +286,7 @@ internal static class Program
             throw new InvalidDataException("Data/Scripts.rvdata2 missing from new archive.");
         }
         var checkScripts = ScriptsFile.Read(checkArchive.Extract(tempPath, checkScriptsEntry));
-        if (!checkScripts.Entries.Any(e => e.Title.IndexOf(ScriptTitle, StringComparison.OrdinalIgnoreCase) >= 0))
+        if (!checkScripts.Entries.Any(e => e.Title.IndexOf(_scriptTitle, StringComparison.OrdinalIgnoreCase) >= 0))
         {
             throw new InvalidDataException("New archive verification failed.");
         }
@@ -382,7 +393,7 @@ internal static class Program
 
         builder.AppendLine("module BSOPTS");
         builder.AppendLine("  TEXT = {");
-        foreach (var pair in _text.Where(pair => pair.Key.StartsWith("game.", StringComparison.Ordinal)))
+        foreach (var pair in _gameText.Where(pair => pair.Key.StartsWith("game.", StringComparison.Ordinal)))
         {
             builder.Append("    \"")
                 .Append(pair.Key["game.".Length..])
@@ -402,7 +413,7 @@ internal static class Program
         return value.Replace("\\", "\\\\").Replace("'", "\\'");
     }
 
-    private static bool CheckGameIni(string gameDir)
+    private static bool DetectGame(string gameDir)
     {
         string ini = Path.Combine(gameDir, "Game.ini");
         string? titleLine = File.Exists(ini)
@@ -412,16 +423,62 @@ internal static class Program
         if (titleLine != null)
         {
             string title = titleLine[6..].Trim();
-            if (GameGeneration == 1
-                ? title.Equals(GameTitle, StringComparison.OrdinalIgnoreCase)
-                : title.StartsWith(GameTitle + " II", StringComparison.OrdinalIgnoreCase))
+            if (title.StartsWith(GameTitle + " II", StringComparison.OrdinalIgnoreCase))
             {
+                SetGame(2);
+                return true;
+            }
+            if (title.StartsWith(GameTitle, StringComparison.OrdinalIgnoreCase))
+            {
+                SetGame(1);
                 return true;
             }
         }
 
-        Error(TF("installer.check.ini", GameName));
+        Error(TF("installer.check.ini", "BLACK SOULS / BLACK SOULS II"));
         return false;
+    }
+
+    private static void SetGame(int generation)
+    {
+        _gameGeneration = generation;
+        _gameName = generation == 1 ? GameTitle : GameTitle + " II";
+        _scriptTitle = _gameName + " QoL";
+        _legacyScriptTitle = _gameName + " options";
+    }
+
+    private static string DetectGameLanguage(ScriptsFile scripts)
+    {
+        var vocab = scripts.Entries.FirstOrDefault(e =>
+            string.Equals(e.Title.Trim(), "Vocab", StringComparison.OrdinalIgnoreCase));
+        if (vocab == null)
+        {
+            return "en";
+        }
+
+        using var input = new MemoryStream(vocab.Compressed);
+        using var zlib = new ZLibStream(input, CompressionMode.Decompress);
+        using var output = new MemoryStream();
+        zlib.CopyTo(output);
+        string code = Regex.Replace(
+            Encoding.UTF8.GetString(output.ToArray()), "#.*$", "", RegexOptions.Multiline);
+
+        int kana = Regex.Matches(code, "[\u3040-\u30FF]").Count;
+        int cjk = Regex.Matches(code, "[\u4E00-\u9FFF]").Count;
+        // Chinese patches may leave a few untranslated Japanese lines.
+        if (Regex.IsMatch(code, "[买卖弃档经验伤败胜闪击护复]"))
+        {
+            return "zh";
+        }
+        if (kana > 0 && kana * 2 > cjk)
+        {
+            return "ja";
+        }
+        if (cjk > 0)
+        {
+            return "zh";
+        }
+        return "en";
     }
 
     private static bool IsGameRunning(string gameDir)
@@ -701,6 +758,7 @@ internal sealed class ScriptEntry
 {
     public int Id;
     public string Title = "";
+    public byte[] Compressed = Array.Empty<byte>();
     public int RawStart;
     public int RawEnd;
 }
@@ -735,11 +793,16 @@ internal sealed class ScriptsFile
             {
                 throw new InvalidDataException($"Script entry {i} has an invalid title.");
             }
+            if (item[2] is not byte[] compressed)
+            {
+                throw new InvalidDataException($"Script entry {i} has invalid code.");
+            }
 
             result.Entries.Add(new ScriptEntry
             {
                 Id = ParseId(item[0], i),
                 Title = Encoding.UTF8.GetString(titleBytes),
+                Compressed = compressed,
                 RawStart = start,
                 RawEnd = end,
             });

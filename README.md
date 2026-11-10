@@ -6,6 +6,7 @@ Read this in other languages: English | [中文](./README.zh.md) | [日本語](.
 
 ## Features
 
+- Single exe: automatically detects BLACK SOULS or BLACK SOULS II and the game language.
 - Options screen: adds an "Options" entry to the title screen and pause menu. The screen is modeled after the default Options screen in RPG Maker MZ.
 - Window resolution: supports 640×480, 1280×960, 1920×1440, and 2560×1920.
 - Borderless fullscreen: fullscreen stretches the game's original 4:3 image to the screen aspect ratio.
@@ -17,24 +18,14 @@ Read this in other languages: English | [中文](./README.zh.md) | [日本語](.
 
 ## Download
 
-Download the exe for your game from [GitHub Releases](https://github.com/xueelf/BlackSoulsOptionsPatch/releases/latest):
+Download the exe from [GitHub Releases](https://github.com/xueelf/BlackSoulsOptionsPatch/releases/latest):
 
-BLACK SOULS:
-
-- Chinese: `BlackSouls-QoL-CN.exe`
-- Japanese: `BlackSouls-QoL-JP.exe`
-- English: `BlackSouls-QoL-EN.exe`
-
-BLACK SOULS II:
-
-- Chinese: `BlackSoulsII-QoL-CN.exe`
-- Japanese: `BlackSoulsII-QoL-JP.exe`
-- English: `BlackSoulsII-QoL-EN.exe`
+- `BlackSoulsQoLPatch.exe`
 
 ## Usage
 
 1. Exit the game.
-2. Place the exe for your game in the game directory, alongside `Game.exe` and `Game.rgss3a`.
+2. Place the exe in the game directory of BLACK SOULS or BLACK SOULS II, alongside `Game.exe` and `Game.rgss3a`.
 3. Double-click the exe and select a number:
 
 ```text
@@ -42,6 +33,8 @@ BLACK SOULS II:
 2) Uninstall
 3) Exit
 ```
+
+The installer follows your system language and falls back to English. The in-game text follows the detected game language.
 
 During installation the original `Game.rgss3a` is backed up as `Game.rgss3a.bsopts.bak`. Uninstalling restores the original, deletes the backup and `Options.ini`, and removes the high-DPI compatibility setting.
 

@@ -6,6 +6,7 @@
 
 ## 機能
 
+- 単一 exe：BLACK SOULS / BLACK SOULS II とゲーム言語を自動判別します。
 - 設定画面：タイトル画面に「OPTIONS」、ポーズメニューに「オプション」の項目を追加します。画面は RPG Maker MZ の既定のオプション画面を参考にしています。
 - ウィンドウサイズ：640×480、1280×960、1920×1440、2560×1920 の 4 種類に対応します。
 - ボーダーレス全画面：全画面ではゲーム本来の 4:3 画面を画面比率に合わせて引き伸ばします。
@@ -17,24 +18,14 @@
 
 ## ダウンロード
 
-[GitHub Releases](https://github.com/xueelf/BlackSoulsOptionsPatch/releases/latest) から使用するゲームの exe をダウンロードしてください：
+[GitHub Releases](https://github.com/xueelf/BlackSoulsOptionsPatch/releases/latest) から exe をダウンロードしてください：
 
-BLACK SOULS：
-
-- 中国語：`BlackSouls-QoL-CN.exe`
-- 日本語：`BlackSouls-QoL-JP.exe`
-- 英語：`BlackSouls-QoL-EN.exe`
-
-BLACK SOULS II：
-
-- 中国語：`BlackSoulsII-QoL-CN.exe`
-- 日本語：`BlackSoulsII-QoL-JP.exe`
-- 英語：`BlackSoulsII-QoL-EN.exe`
+- `BlackSoulsQoLPatch.exe`
 
 ## 使い方
 
 1. ゲームを終了します。
-2. 使用するゲームの exe をゲームディレクトリに置き、`Game.exe`、`Game.rgss3a` と同じ場所にします。
+2. BLACK SOULS または BLACK SOULS II のゲームディレクトリに exe を置き、`Game.exe`、`Game.rgss3a` と同じ場所にします。
 3. ダウンロードした exe をダブルクリックし、番号を選択します：
 
 ```text
@@ -42,6 +33,8 @@ BLACK SOULS II：
 2) アンインストール
 3) 終了
 ```
+
+インストーラーはシステム言語に従い、対応する言語がない場合は英語を使用します。ゲーム内のテキストは検出されたゲーム言語に従います。
 
 インストール時にゲーム原本の `Game.rgss3a` を `Game.rgss3a.bsopts.bak` としてバックアップします。アンインストールすると原本に戻し、バックアップと `Options.ini` を削除し、高 DPI 互換性設定を解除します。
 

@@ -1,0 +1,17 @@
+{
+  "game.battle.log": "Log",
+  "game.common.off": "OFF",
+  "game.common.on": "ON",
+  "game.options.audio.bgm": "BGM Volume",
+  "game.options.audio.bgs": "BGS Volume",
+  "game.options.audio.me": "ME Volume",
+  "game.options.audio.se": "SE Volume",
+  "game.options.display.mode": "Display Mode",
+  "game.options.display.mode.fullscreen": "Fullscreen",
+  "game.options.display.mode.window": "Windowed",
+  "game.options.display.resolution": "Window Size",
+  "game.options.gameplay.dash": "Always Dash",
+  "game.options.label.menu": "Options",
+  "game.options.label.title": "Options",
+  "game.options.reset": "Restore Defaults"
+}

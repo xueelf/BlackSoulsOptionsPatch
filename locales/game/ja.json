@@ -1,0 +1,17 @@
+{
+  "game.battle.log": "ログ",
+  "game.common.off": "OFF",
+  "game.common.on": "ON",
+  "game.options.audio.bgm": "BGM 音量",
+  "game.options.audio.bgs": "BGS 音量",
+  "game.options.audio.me": "ME 音量",
+  "game.options.audio.se": "SE 音量",
+  "game.options.display.mode": "表示モード",
+  "game.options.display.mode.fullscreen": "全画面",
+  "game.options.display.mode.window": "ウィンドウ",
+  "game.options.display.resolution": "ウィンドウサイズ",
+  "game.options.gameplay.dash": "常時ダッシュ",
+  "game.options.label.menu": "オプション",
+  "game.options.label.title": "OPTIONS",
+  "game.options.reset": "デフォルトに戻す"
+}

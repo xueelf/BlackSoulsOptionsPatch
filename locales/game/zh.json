@@ -1,0 +1,17 @@
+{
+  "game.battle.log": "日志",
+  "game.common.off": "OFF",
+  "game.common.on": "ON",
+  "game.options.audio.bgm": "BGM 音量",
+  "game.options.audio.bgs": "BGS 音量",
+  "game.options.audio.me": "ME 音量",
+  "game.options.audio.se": "SE 音量",
+  "game.options.display.mode": "显示模式",
+  "game.options.display.mode.fullscreen": "全屏",
+  "game.options.display.mode.window": "窗口",
+  "game.options.display.resolution": "窗口大小",
+  "game.options.gameplay.dash": "始终奔跑",
+  "game.options.label.menu": "选项",
+  "game.options.label.title": "选项",
+  "game.options.reset": "恢复默认"
+}

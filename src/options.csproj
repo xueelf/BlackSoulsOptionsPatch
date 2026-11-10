@@ -4,26 +4,16 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <AssemblyName>BlackSouls-QoL</AssemblyName>
+    <AssemblyName>BlackSoulsQoLPatch</AssemblyName>
     <Company>Yuki</Company>
     <Product>Black Souls QoL Patch</Product>
     <Copyright>Copyright © 2026 Yuki &lt;admin@yuki.sh&gt;</Copyright>
-    <GameGeneration Condition="'$(GameGeneration)' == ''">1</GameGeneration>
-    <GameName Condition="'$(GameGeneration)' == '1'">BLACK SOULS</GameName>
-    <GameName Condition="'$(GameGeneration)' == '2'">BLACK SOULS II</GameName>
-    <GameLocaleDir Condition="'$(GameGeneration)' == '1'">BlackSouls</GameLocaleDir>
-    <GameLocaleDir Condition="'$(GameGeneration)' == '2'">BlackSoulsII</GameLocaleDir>
-    <ApplicationIcon Condition="'$(GameGeneration)' == '1'">..\artifacts\icons\BlackSouls.ico</ApplicationIcon>
-    <ApplicationIcon Condition="'$(GameGeneration)' == '2'">..\artifacts\icons\BlackSoulsII.ico</ApplicationIcon>
+    <ApplicationIcon>..\assets\BlackSoulsQoLPatch.ico</ApplicationIcon>
     <RootNamespace>OptionsPatch</RootNamespace>
-    <Locale Condition="'$(Locale)' == ''">zh</Locale>
-    <AssemblyTitle Condition="'$(Locale)' == 'zh'">游戏 $(GameName) 的非官方 QoL 优化补丁，添加选项界面、战斗日志等功能。</AssemblyTitle>
-    <AssemblyTitle Condition="'$(Locale)' == 'ja'">ゲーム $(GameName) の非公式 QoL 最適化パッチ。設定画面や戦闘ログなどを追加します。</AssemblyTitle>
-    <AssemblyTitle Condition="'$(Locale)' == 'en'">An unofficial QoL patch for $(GameName) that adds an options screen, battle log, and more.</AssemblyTitle>
+    <AssemblyTitle>An unofficial QoL patch for BLACK SOULS and BLACK SOULS II.</AssemblyTitle>
     <BuildDate>$([System.DateTime]::Now.ToString("yyyy.MM.dd"))</BuildDate>
     <Version>$(BuildDate)</Version>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
-    <InvariantGlobalization>true</InvariantGlobalization>
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>true</SelfContained>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
@@ -32,8 +22,14 @@
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
   </PropertyGroup>
   <ItemGroup>
-    <AssemblyMetadata Include="GameGeneration" Value="$(GameGeneration)" />
-    <EmbeddedResource Include="options.rb" Link="options.rb" />
-    <EmbeddedResource Include="..\locales\$(GameLocaleDir)\$(Locale).json" Link="locale.json" />
+    <EmbeddedResource Include="options.rb">
+      <LogicalName>options.rb</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\locales\installer\*.json">
+      <LogicalName>locale.installer.%(Filename).json</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\locales\game\*.json">
+      <LogicalName>locale.game.%(Filename).json</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
 </Project>
