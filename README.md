@@ -7,6 +7,7 @@ Read this in other languages: English | [中文](./README.zh.md) | [日本語](.
 ## Features
 
 - Single exe: automatically detects BLACK SOULS or BLACK SOULS II and the game language.
+- GUI installer: detects the game, platform, language, and installation status.
 - Options screen: adds menu entries to the title screen and pause menu. The screen is modeled after the default Options screen in RPG Maker MZ.
 - Window resolution: supports 640×480, 1280×960, 1920×1440, and 2560×1920.
 - Borderless fullscreen: fullscreen stretches the game's original 4:3 image to the screen aspect ratio.
@@ -26,19 +27,13 @@ Download the exe from [GitHub Releases](https://github.com/xueelf/BlackSoulsOpti
 
 1. Exit the game.
 2. Place the exe in the game directory of BLACK SOULS or BLACK SOULS II, alongside `Game.exe` and `Game.rgss3a`.
-3. Double-click the exe and select a number:
-
-```text
-1) Install/Update
-2) Uninstall
-3) Exit
-```
+3. Double-click the exe and use “Install / Update” or “Uninstall” in the window.
 
 The installer follows your system language and falls back to English. The in-game text follows the detected game language.
 
 During installation the original `Game.rgss3a` is backed up as `Game.rgss3a.bsopts.bak`. Uninstalling restores the original, deletes the backup and `Options.ini`, and removes the high-DPI compatibility setting.
 
-If the exe is not in the game directory, or `Game.exe` or `Game.rgss3a` is missing, the program will show an error message.
+If the game is not detected, the window shows the reason and disables both buttons.
 
 ## Notice
 
