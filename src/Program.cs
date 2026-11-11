@@ -417,19 +417,27 @@ internal static class Program
     {
         string ini = Path.Combine(gameDir, "Game.ini");
         string? titleLine = File.Exists(ini)
-            ? File.ReadLines(ini).FirstOrDefault(line => line.StartsWith("Title=", StringComparison.OrdinalIgnoreCase))
+            ? Encoding.Latin1.GetString(File.ReadAllBytes(ini))
+                .Split('\n')
+                .Select(line => line.TrimEnd('\r'))
+                .FirstOrDefault(line => line.StartsWith("Title=", StringComparison.OrdinalIgnoreCase))
             : null;
 
         if (titleLine != null)
         {
             string title = titleLine[6..].Trim();
-            if (title.StartsWith(GameTitle + " II", StringComparison.OrdinalIgnoreCase))
-            {
-                SetGame(2);
-                return true;
-            }
             if (title.StartsWith(GameTitle, StringComparison.OrdinalIgnoreCase))
             {
+                string suffix = title[GameTitle.Length..].TrimStart();
+
+                // Steam uses ASCII II; the DLsite Chinese build uses GBK full-width II.
+                if (suffix.StartsWith("II", StringComparison.Ordinal) ||
+                    suffix.StartsWith("\u00A2\u00F2", StringComparison.Ordinal))
+                {
+                    SetGame(2);
+                    return true;
+                }
+
                 SetGame(1);
                 return true;
             }
