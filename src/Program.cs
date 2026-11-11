@@ -209,7 +209,7 @@ internal static class Program
 
         Console.WriteLine();
         Console.WriteLine(T(key));
-        try { Console.ReadKey(true); } catch { }
+        Console.ReadKey(true);
     }
 
     private static void Install(string archivePath, string backupPath)
@@ -461,7 +461,7 @@ internal static class Program
             string.Equals(e.Title.Trim(), "Vocab", StringComparison.OrdinalIgnoreCase));
         if (vocab == null)
         {
-            return "en";
+            throw new InvalidDataException("Vocab script missing.");
         }
 
         using var input = new MemoryStream(vocab.Compressed);

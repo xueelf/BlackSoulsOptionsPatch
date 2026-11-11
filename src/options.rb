@@ -63,56 +63,48 @@ module BSOPTS
     def load_config
       cfg = DEFAULTS.dup
 
-      begin
-        if File.exist?(config_path)
-          File.open(config_path, "rb") do |file|
-            file.each_line do |line|
-              line = line.strip
-              next if line.empty? || line[0, 1] == "#"
+      if File.exist?(config_path)
+        File.open(config_path, "rb") do |file|
+          file.each_line do |line|
+            line = line.strip
+            next if line.empty? || line[0, 1] == "#"
 
-              key, value = line.split("=", 2)
-              next if key.nil? || value.nil?
+            key, value = line.split("=", 2)
 
-              case key.strip
-              when "resolution"
-                cfg[:resolution] = value.strip
-              when "fullscreen"
-                cfg[:fullscreen] = (value.to_i != 0)
-              when "bgm"
-                cfg[:bgm] = clamp_volume(value.to_i)
-              when "bgs"
-                cfg[:bgs] = clamp_volume(value.to_i)
-              when "me"
-                cfg[:me] = clamp_volume(value.to_i)
-              when "se"
-                cfg[:se] = clamp_volume(value.to_i)
-              when "always_dash"
-                cfg[:always_dash] = (value.to_i != 0)
-              end
+            case key.strip
+            when "resolution"
+              cfg[:resolution] = value.strip
+            when "fullscreen"
+              cfg[:fullscreen] = (value.to_i != 0)
+            when "bgm"
+              cfg[:bgm] = value.to_i
+            when "bgs"
+              cfg[:bgs] = value.to_i
+            when "me"
+              cfg[:me] = value.to_i
+            when "se"
+              cfg[:se] = value.to_i
+            when "always_dash"
+              cfg[:always_dash] = (value.to_i != 0)
             end
           end
         end
-      rescue
       end
 
-      cfg[:resolution] = "640x480" unless RESOLUTIONS.include?(cfg[:resolution])
       cfg
     end
 
     def save_config
-      begin
-        File.open(config_path, "wb") do |file|
-          file.write("# BLACK SOULS QoL Patch\n")
-          file.write("# This file is re-created automatically.\n")
-          file.write("resolution=#{config[:resolution]}\n")
-          file.write("fullscreen=#{config[:fullscreen] ? 1 : 0}\n")
-          file.write("bgm=#{config[:bgm]}\n")
-          file.write("bgs=#{config[:bgs]}\n")
-          file.write("me=#{config[:me]}\n")
-          file.write("se=#{config[:se]}\n")
-          file.write("always_dash=#{config[:always_dash] ? 1 : 0}\n")
-        end
-      rescue
+      File.open(config_path, "wb") do |file|
+        file.write("# BLACK SOULS QoL Patch\n")
+        file.write("# This file is re-created automatically.\n")
+        file.write("resolution=#{config[:resolution]}\n")
+        file.write("fullscreen=#{config[:fullscreen] ? 1 : 0}\n")
+        file.write("bgm=#{config[:bgm]}\n")
+        file.write("bgs=#{config[:bgs]}\n")
+        file.write("me=#{config[:me]}\n")
+        file.write("se=#{config[:se]}\n")
+        file.write("always_dash=#{config[:always_dash] ? 1 : 0}\n")
       end
     end
 
@@ -137,19 +129,9 @@ module BSOPTS
     def work_area
       return @work_area if @work_area
 
-      begin
-        buffer = [0, 0, 0, 0].pack("l4")
-        if BSWin32::SYSTEM_PARAMETERS_INFO.call(SPI_GETWORKAREA, 0, buffer, 0) != 0
-          @work_area = buffer.unpack("l4")
-        else
-          @work_area = [0, 0, BSWin32::GET_SYSTEM_METRICS.call(0),
-                        BSWin32::GET_SYSTEM_METRICS.call(1)]
-        end
-      rescue
-        @work_area = [0, 0, 0, 0]
-      end
-
-      @work_area
+      buffer = [0, 0, 0, 0].pack("l4")
+      BSWin32::SYSTEM_PARAMETERS_INFO.call(SPI_GETWORKAREA, 0, buffer, 0)
+      @work_area = buffer.unpack("l4")
     end
 
     def resolution_label
@@ -157,7 +139,7 @@ module BSOPTS
     end
 
     def cycle_resolution(direction)
-      index = RESOLUTIONS.index(config[:resolution]) || 0
+      index = RESOLUTIONS.index(config[:resolution])
       index = (index + direction) % RESOLUTIONS.length
       config[:resolution] = RESOLUTIONS[index]
       save_config
@@ -235,8 +217,6 @@ module BSOPTS
       length = BSWin32::GET_CLASS_NAME.call(handle, name, 256)
 
       name[0, length] == "RGSS Player"
-    rescue
-      false
     end
 
     def find_window
@@ -259,24 +239,18 @@ module BSOPTS
       end
 
       0
-    rescue
-      0
     end
 
     def get_rect(api, handle)
       buffer = [0, 0, 0, 0].pack("l4")
-      return nil if api.call(handle, buffer) == 0
-
+      api.call(handle, buffer)
       buffer.unpack("l4")
-    rescue
-      nil
     end
 
     def set_client_size(handle, client_width, client_height)
       BSWin32::SHOW_WINDOW.call(handle, SW_RESTORE)
       window = get_rect(BSWin32::GET_WINDOW_RECT, handle)
       client = get_rect(BSWin32::GET_CLIENT_RECT, handle)
-      return false if window.nil? || client.nil?
 
       border_width = (window[2] - window[0]) - client[2]
       border_height = (window[3] - window[1]) - client[3]
@@ -286,16 +260,12 @@ module BSOPTS
       x = area[0] + (area[2] - area[0] - window_width) / 2
       y = area[1] + (area[3] - area[1] - window_height) / 2
       BSWin32::SET_WINDOW_POS.call(handle, 0, x, y, window_width, window_height,
-                                   SWP_NOZORDER | SWP_NOACTIVATE) != 0
-    rescue
-      false
+                                   SWP_NOZORDER | SWP_NOACTIVATE)
     end
 
     def apply_fullscreen(handle)
       if @fullscreen_saved.nil?
         rect = get_rect(BSWin32::GET_WINDOW_RECT, handle)
-        return false if rect.nil?
-
         style = BSWin32::GET_WINDOW_LONG.call(handle, GWL_STYLE)
         exstyle = BSWin32::GET_WINDOW_LONG.call(handle, GWL_EXSTYLE)
         @fullscreen_saved = [style, exstyle, rect]
@@ -305,29 +275,24 @@ module BSOPTS
       width = BSWin32::GET_SYSTEM_METRICS.call(0)
       height = BSWin32::GET_SYSTEM_METRICS.call(1)
       BSWin32::SET_WINDOW_POS.call(handle, 0, 0, 0, width, height,
-                                   SWP_NOZORDER | SWP_FRAMECHANGED | SWP_SHOWWINDOW) != 0
-    rescue
-      false
+                                   SWP_NOZORDER | SWP_FRAMECHANGED | SWP_SHOWWINDOW)
     end
 
     def restore_from_fullscreen(handle)
-      return true if @fullscreen_saved.nil?
+      return if @fullscreen_saved.nil?
 
       style, exstyle, rect = @fullscreen_saved
       BSWin32::SET_WINDOW_LONG.call(handle, GWL_STYLE, style)
       BSWin32::SET_WINDOW_LONG.call(handle, GWL_EXSTYLE, exstyle)
-      result = BSWin32::SET_WINDOW_POS.call(handle, 0, rect[0], rect[1],
-                                            rect[2] - rect[0], rect[3] - rect[1],
-                                            SWP_NOZORDER | SWP_FRAMECHANGED) != 0
+      BSWin32::SET_WINDOW_POS.call(handle, 0, rect[0], rect[1],
+                                   rect[2] - rect[0], rect[3] - rect[1],
+                                   SWP_NOZORDER | SWP_FRAMECHANGED)
       @fullscreen_saved = nil
-      result
-    rescue
-      false
     end
 
     def apply_window
       handle = find_window
-      return false if handle == 0
+      return if handle == 0
 
       if config[:fullscreen]
         apply_fullscreen(handle)
@@ -336,8 +301,6 @@ module BSOPTS
         width, height = config[:resolution].split("x").map(&:to_i)
         set_client_size(handle, width, height)
       end
-    rescue
-      false
     end
 
     def start_settings(font)
@@ -366,74 +329,60 @@ end
 #==============================================================================
 module Audio
   class << self
-    unless method_defined?(:bs_options_original_bgm_play)
-      alias_method :bs_options_original_bgm_play, :bgm_play
-      def bgm_play(filename, volume = 100, pitch = 100, *rest)
-        @bs_options_last_bgm = [filename, volume, pitch, rest]
-        @bs_options_bgm_playing = true
+    alias_method :bs_options_original_bgm_play, :bgm_play
+    def bgm_play(filename, volume = 100, pitch = 100, *rest)
+      @bs_options_last_bgm = [filename, volume, pitch, rest]
+      @bs_options_bgm_playing = true
 
-        bs_options_original_bgm_play(filename, BSOPTS.scale_volume(volume, :bgm), pitch, *rest)
-      end
+      bs_options_original_bgm_play(filename, BSOPTS.scale_volume(volume, :bgm), pitch, *rest)
     end
 
-    unless method_defined?(:bs_options_original_bgm_stop)
-      alias_method :bs_options_original_bgm_stop, :bgm_stop
-      def bgm_stop
-        @bs_options_bgm_playing = false
+    alias_method :bs_options_original_bgm_stop, :bgm_stop
+    def bgm_stop
+      @bs_options_bgm_playing = false
 
-        bs_options_original_bgm_stop
-      end
+      bs_options_original_bgm_stop
     end
 
-    unless method_defined?(:bs_options_original_bgs_play)
-      alias_method :bs_options_original_bgs_play, :bgs_play
-      def bgs_play(filename, volume = 100, pitch = 100, *rest)
-        @bs_options_last_bgs = [filename, volume, pitch, rest]
-        @bs_options_bgs_playing = true
+    alias_method :bs_options_original_bgs_play, :bgs_play
+    def bgs_play(filename, volume = 100, pitch = 100, *rest)
+      @bs_options_last_bgs = [filename, volume, pitch, rest]
+      @bs_options_bgs_playing = true
 
-        bs_options_original_bgs_play(filename, BSOPTS.scale_volume(volume, :bgs), pitch, *rest)
-      end
+      bs_options_original_bgs_play(filename, BSOPTS.scale_volume(volume, :bgs), pitch, *rest)
     end
 
-    unless method_defined?(:bs_options_original_bgs_stop)
-      alias_method :bs_options_original_bgs_stop, :bgs_stop
-      def bgs_stop
-        @bs_options_bgs_playing = false
+    alias_method :bs_options_original_bgs_stop, :bgs_stop
+    def bgs_stop
+      @bs_options_bgs_playing = false
 
-        bs_options_original_bgs_stop
-      end
+      bs_options_original_bgs_stop
     end
 
-    unless method_defined?(:bs_options_original_me_play)
-      alias_method :bs_options_original_me_play, :me_play
-      def me_play(filename, volume = 100, pitch = 100, *rest)
-        bs_options_original_me_play(filename, BSOPTS.scale_volume(volume, :me), pitch, *rest)
-      end
+    alias_method :bs_options_original_me_play, :me_play
+    def me_play(filename, volume = 100, pitch = 100, *rest)
+      bs_options_original_me_play(filename, BSOPTS.scale_volume(volume, :me), pitch, *rest)
     end
 
-    unless method_defined?(:bs_options_original_se_play)
-      alias_method :bs_options_original_se_play, :se_play
-      def se_play(filename, volume = 100, pitch = 100, *rest)
-        bs_options_original_se_play(filename, BSOPTS.scale_volume(volume, :se), pitch, *rest)
-      end
+    alias_method :bs_options_original_se_play, :se_play
+    def se_play(filename, volume = 100, pitch = 100, *rest)
+      bs_options_original_se_play(filename, BSOPTS.scale_volume(volume, :se), pitch, *rest)
     end
 
     def bs_options_replay_bgm
-      return unless @bs_options_bgm_playing && @bs_options_last_bgm
+      return unless @bs_options_bgm_playing
 
       filename, volume, pitch, rest = @bs_options_last_bgm
 
       bs_options_original_bgm_play(filename, BSOPTS.scale_volume(volume, :bgm), pitch, *rest)
-    rescue
     end
 
     def bs_options_replay_bgs
-      return unless @bs_options_bgs_playing && @bs_options_last_bgs
+      return unless @bs_options_bgs_playing
 
       filename, volume, pitch, rest = @bs_options_last_bgs
 
       bs_options_original_bgs_play(filename, BSOPTS.scale_volume(volume, :bgs), pitch, *rest)
-    rescue
     end
   end
 end
@@ -613,17 +562,15 @@ end
 #==============================================================================
 # Add the options command to the title screen and the pause menu
 #==============================================================================
-unless Window_TitleCommand.method_defined?(:bs_options_make_command_list)
-  class Window_TitleCommand
-    alias_method :bs_options_make_command_list, :make_command_list
-    def make_command_list
-      bs_options_make_command_list
+class Window_TitleCommand
+  alias_method :bs_options_make_command_list, :make_command_list
+  def make_command_list
+    bs_options_make_command_list
 
-      indent = @list.first[:name][/\A */]
-      @list.insert(@list.size - 1,
-                   {:name => indent + BSOPTS::TEXT["options.label.title"], :symbol => :bs_options,
-                    :enabled => true, :ext => nil})
-    end
+    indent = @list.first[:name][/\A */]
+    @list.insert(@list.size - 1,
+                 {:name => indent + BSOPTS::TEXT["options.label.title"], :symbol => :bs_options,
+                  :enabled => true, :ext => nil})
   end
 end
 
@@ -635,65 +582,56 @@ class Scene_Base
   end
 end
 
-unless Scene_Title.method_defined?(:bs_options_create_command_window)
-  class Scene_Title
-    alias_method :bs_options_create_command_window, :create_command_window
-    def create_command_window
-      bs_options_create_command_window
+class Scene_Title
+  alias_method :bs_options_create_command_window, :create_command_window
+  def create_command_window
+    bs_options_create_command_window
 
-      @command_window.set_handler(:bs_options, method(:command_bs_options))
-    end
+    @command_window.set_handler(:bs_options, method(:command_bs_options))
+  end
 
-    alias_method :bs_options_start, :start
-    def start
-      bs_options_start
+  alias_method :bs_options_start, :start
+  def start
+    bs_options_start
 
-      BSOPTS.apply_window
-      if BSOPTS.return_to_title_options
-        @command_window.select_symbol(:bs_options)
-        BSOPTS.return_to_title_options = false
-      end
+    BSOPTS.apply_window
+    if BSOPTS.return_to_title_options
+      @command_window.select_symbol(:bs_options)
+      BSOPTS.return_to_title_options = false
     end
   end
 end
 
-unless Window_MenuCommand.method_defined?(:bs_options_make_command_list)
-  class Window_MenuCommand
-    alias_method :bs_options_make_command_list, :make_command_list
-    def make_command_list
-      bs_options_make_command_list
+class Window_MenuCommand
+  alias_method :bs_options_make_command_list, :make_command_list
+  def make_command_list
+    bs_options_make_command_list
 
-      index = @list.index { |item| item[:symbol] == :save }
-      index = @list.size if index.nil?
+    index = @list.index { |item| item[:symbol] == :save }
 
-      @list.insert(index,
-                   {:name => BSOPTS::TEXT["options.label.menu"], :symbol => :bs_options,
-                    :enabled => true, :ext => nil})
-    end
+    @list.insert(index,
+                 {:name => BSOPTS::TEXT["options.label.menu"], :symbol => :bs_options,
+                  :enabled => true, :ext => nil})
   end
 end
 
-unless Game_Player.method_defined?(:bs_options_original_dash_rev?)
-  class Game_Player
-    alias_method :bs_options_original_dash_rev?, :dash_rev?
-    def dash_rev?
-      return bs_options_original_dash_rev? unless BSOPTS.config[:always_dash]
-      return false if @move_route_forcing
-      return false if $game_map.disable_dash?
-      return false if vehicle
-      !Input.press?(:A)
-    end
+class Game_Player
+  alias_method :bs_options_original_dash_rev?, :dash_rev?
+  def dash_rev?
+    return bs_options_original_dash_rev? unless BSOPTS.config[:always_dash]
+    return false if @move_route_forcing
+    return false if $game_map.disable_dash?
+    return false if vehicle
+    !Input.press?(:A)
   end
 end
 
-unless Scene_Menu.method_defined?(:bs_options_create_command_window)
-  class Scene_Menu
-    alias_method :bs_options_create_command_window, :create_command_window
-    def create_command_window
-      bs_options_create_command_window
+class Scene_Menu
+  alias_method :bs_options_create_command_window, :create_command_window
+  def create_command_window
+    bs_options_create_command_window
 
-      @command_window.set_handler(:bs_options, method(:command_bs_options))
-    end
+    @command_window.set_handler(:bs_options, method(:command_bs_options))
   end
 end
 
@@ -806,83 +744,77 @@ class Window_CombatLog < Window_Selectable
   end
 end
 
-unless Window_BattleLog.method_defined?(:bs_options_add_text)
-  class Window_BattleLog
-    alias_method :bs_options_add_text, :add_text
-    def add_text(text)
-      BSOPTS.add_battle_log(text)
-      bs_options_add_text(text)
-    end
+class Window_BattleLog
+  alias_method :bs_options_add_text, :add_text
+  def add_text(text)
+    BSOPTS.add_battle_log(text)
+    bs_options_add_text(text)
+  end
 
-    alias_method :bs_options_replace_text, :replace_text
-    def replace_text(text)
-      BSOPTS.replace_battle_log(text)
-      bs_options_replace_text(text)
-    end
+  alias_method :bs_options_replace_text, :replace_text
+  def replace_text(text)
+    BSOPTS.replace_battle_log(text)
+    bs_options_replace_text(text)
   end
 end
 
-unless Window_ActorCommand.method_defined?(:bs_options_make_command_list)
-  class Window_ActorCommand
-    alias_method :bs_options_make_command_list, :make_command_list
-    def make_command_list
-      bs_options_make_command_list
-      if @actor
-        add_command([BSOPTS::TEXT["battle.log"], 0], :battle_log)
-        set_position if BattleCommand_Custom::ACTOR_MODE >= 2
-      end
+class Window_ActorCommand
+  alias_method :bs_options_make_command_list, :make_command_list
+  def make_command_list
+    bs_options_make_command_list
+    if @actor
+      add_command([BSOPTS::TEXT["battle.log"], 0], :battle_log)
+      set_position if BattleCommand_Custom::ACTOR_MODE >= 2
     end
+  end
 
-    def cursor_down(wrap = false)
-      return if item_max <= 1
-      return if @bs_options_cursor_frame == Graphics.frame_count
+  def cursor_down(wrap = false)
+    return if item_max <= 1
+    return if @bs_options_cursor_frame == Graphics.frame_count
 
-      @bs_options_cursor_frame = Graphics.frame_count
-      index = self.index + 1
-      index = 0 if index >= item_max && wrap
-      select(index) if index < item_max
-    end
+    @bs_options_cursor_frame = Graphics.frame_count
+    index = self.index + 1
+    index = 0 if index >= item_max && wrap
+    select(index) if index < item_max
+  end
 
-    def cursor_up(wrap = false)
-      return if item_max <= 1
-      return if @bs_options_cursor_frame == Graphics.frame_count
+  def cursor_up(wrap = false)
+    return if item_max <= 1
+    return if @bs_options_cursor_frame == Graphics.frame_count
 
-      @bs_options_cursor_frame = Graphics.frame_count
-      index = self.index - 1
-      index = item_max - 1 if index < 0 && wrap
-      select(index) if index >= 0
-    end
+    @bs_options_cursor_frame = Graphics.frame_count
+    index = self.index - 1
+    index = item_max - 1 if index < 0 && wrap
+    select(index) if index >= 0
   end
 end
 
-unless Scene_Battle.method_defined?(:bs_options_create_log_window)
-  class Scene_Battle
-    alias_method :bs_options_create_log_window, :create_log_window
-    def create_log_window
-      BSOPTS.reset_battle_log
-      bs_options_create_log_window
-    end
+class Scene_Battle
+  alias_method :bs_options_create_log_window, :create_log_window
+  def create_log_window
+    BSOPTS.reset_battle_log
+    bs_options_create_log_window
+  end
 
-    alias_method :bs_options_create_all_windows, :create_all_windows
-    def create_all_windows
-      bs_options_create_all_windows
-      create_combatlog_window
-      @actor_command_window.set_handler(:battle_log, method(:open_combatlog))
-    end
+  alias_method :bs_options_create_all_windows, :create_all_windows
+  def create_all_windows
+    bs_options_create_all_windows
+    create_combatlog_window
+    @actor_command_window.set_handler(:battle_log, method(:open_combatlog))
+  end
 
-    def create_combatlog_window
-      @combatlog_window = Window_CombatLog.new
-      @combatlog_window.set_handler(:cancel, method(:close_combatlog))
-    end
+  def create_combatlog_window
+    @combatlog_window = Window_CombatLog.new
+    @combatlog_window.set_handler(:cancel, method(:close_combatlog))
+  end
 
-    def open_combatlog
-      @actor_command_window.deactivate
-      @combatlog_window.show
-    end
+  def open_combatlog
+    @actor_command_window.deactivate
+    @combatlog_window.show
+  end
 
-    def close_combatlog
-      @combatlog_window.hide
-      @actor_command_window.activate
-    end
+  def close_combatlog
+    @combatlog_window.hide
+    @actor_command_window.activate
   end
 end
