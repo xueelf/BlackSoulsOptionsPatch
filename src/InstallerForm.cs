@@ -96,7 +96,7 @@ internal sealed class InstallerForm : Form
             Location = new Point(16, 502),
             Size = new Size(388, 66),
             AutoSize = false,
-            TextAlign = ContentAlignment.MiddleLeft,
+            TextAlign = ContentAlignment.TopLeft,
             UseMnemonic = false,
         };
         Controls.Add(_message);
@@ -114,7 +114,7 @@ internal sealed class InstallerForm : Form
         var footerFont = new Font(Font.FontFamily, 7.5F);
         var authorLink = new LinkLabel
         {
-            Text = $"Copyright © 2026 Yuki <admin@yuki.sh>",
+            Text = "Copyright © 2026 Yuki",
             AutoSize = true,
             Font = footerFont,
             LinkBehavior = LinkBehavior.AlwaysUnderline,
