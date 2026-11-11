@@ -1,7 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AssemblyName>BlackSoulsQoLPatch</AssemblyName>
@@ -24,6 +25,9 @@
   <ItemGroup>
     <EmbeddedResource Include="options.rb">
       <LogicalName>options.rb</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\assets\Cover.png">
+      <LogicalName>Cover.png</LogicalName>
     </EmbeddedResource>
     <EmbeddedResource Include="..\locales\installer\*.json">
       <LogicalName>locale.installer.%(Filename).json</LogicalName>

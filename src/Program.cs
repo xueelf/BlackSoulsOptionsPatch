@@ -6,6 +6,7 @@ using System.Runtime.Versioning;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Windows.Forms;
 using Microsoft.Win32;
 
 namespace OptionsPatch;
@@ -14,18 +15,24 @@ namespace OptionsPatch;
 internal static class Program
 {
     private const string GameTitle = "BLACK SOULS";
-    private const string BackupSuffix = ".bsopts.bak";
+    internal const string BackupSuffix = ".bsopts.bak";
     private const string TempSuffix = ".bsopts.tmp";
     private const string DpiLayer = "HIGHDPIAWARE";
     private const string CompatLayersKey = @"Software\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers";
-    private static readonly string Version = GetVersion();
+    internal static readonly string Version = GetVersion();
     private static int _gameGeneration;
     private static bool _isSteam;
+    private static string _gameLanguage = "";
     private static string _gameName = "";
+    private static string _detectionError = "";
     private static string _scriptTitle = "";
     private static string _legacyScriptTitle = "";
     private static readonly Dictionary<string, string> _installerText = new();
     private static readonly Dictionary<string, string> _gameText = new();
+
+    internal static Action<string>? StatusSink;
+    internal static Action<string>? ErrorSink;
+    internal static string? LastError { get; set; }
 
     private static string GetVersion()
     {
@@ -34,17 +41,17 @@ internal static class Program
             .InformationalVersion;
     }
 
-    private static string T(string key)
+    internal static string T(string key)
     {
         return _installerText[key];
     }
 
-    private static string TF(string key, params object[] args)
+    internal static string TF(string key, params object[] args)
     {
         return string.Format(T(key), args);
     }
 
-    private static Stream OpenResource(string name)
+    internal static Stream OpenResource(string name)
     {
         var assembly = Assembly.GetExecutingAssembly();
         return assembly.GetManifestResourceStream(name)
@@ -84,136 +91,101 @@ internal static class Program
             _gameText[$"game.options.label.title.{version}.{store}"];
     }
 
-    private static int Main()
+    [STAThread]
+    private static void Main()
     {
-        Console.OutputEncoding = Encoding.UTF8;
-
         try
         {
             LoadInstallerLocale();
-            return RunMenu();
         }
         catch (Exception ex)
         {
-            Error(TF("installer.terminal.error", ex.Message));
-            Pause("installer.terminal.prompt.exit");
-            return 1;
+            MessageBox.Show(ex.Message, "BLACK SOULS QoL Patch", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            return;
         }
+
+        Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
+        Application.EnableVisualStyles();
+        Application.SetCompatibleTextRenderingDefault(false);
+        Application.Run(new InstallerForm());
     }
 
-    private static int RunMenu()
+    internal sealed record GameInspection(
+        bool Detected,
+        string Name,
+        string Platform,
+        string Language,
+        string Status,
+        string? Error);
+
+    internal static GameInspection InspectGame(string gameDir, string archivePath, string backupPath)
     {
-        Console.WriteLine(TF("installer.terminal.header", Version));
-        Console.WriteLine();
-
-        string gameDir = AppContext.BaseDirectory;
-        string archivePath = Path.Combine(gameDir, "Game.rgss3a");
-        string gameExePath = Path.Combine(gameDir, "Game.exe");
-
-        if (!File.Exists(gameExePath) || !File.Exists(archivePath))
+        if (!File.Exists(Path.Combine(gameDir, "Game.exe")) || !File.Exists(archivePath))
         {
-            Error(T("installer.check.root"));
-            Pause("installer.terminal.prompt.exit");
-            return 1;
+            return new GameInspection(
+                false, "", "", "", "",
+                T("installer.gui.no_game") + "\n" + T("installer.gui.no_game_hint"));
         }
 
         if (!DetectGame(gameDir))
         {
-            Pause("installer.terminal.prompt.exit");
-            return 1;
+            return new GameInspection(false, "", "", "", "", _detectionError);
         }
 
-        string backupPath = archivePath + BackupSuffix;
-
-        while (true)
+        try
         {
-            Console.WriteLine(TF("installer.terminal.status.dir", gameDir));
-            Console.WriteLine(TF("installer.terminal.status.game", _gameName));
-            Console.WriteLine(TF("installer.terminal.status.patch", GetInstallState(backupPath)));
-            Console.WriteLine();
-            Console.WriteLine(T("installer.terminal.action.install"));
-            Console.WriteLine(T("installer.terminal.action.uninstall"));
-            Console.WriteLine(T("installer.terminal.action.exit"));
-            Console.Write(T("installer.terminal.prompt.select"));
-
-            string? choice = ReadMenuChoice();
-            Console.WriteLine();
-
-            if (choice == null)
-            {
-                return 1;
-            }
-
-            if (choice == "3")
-            {
-                return 0;
-            }
-
-            if (choice != "1" && choice != "2")
-            {
-                Console.WriteLine(T("installer.terminal.prompt.invalid"));
-                continue;
-            }
-
-            if (IsGameRunning(gameDir))
-            {
-                Error(T("installer.check.running"));
-                Pause("installer.terminal.prompt.pause");
-                continue;
-            }
-
-            try
-            {
-                if (choice == "1")
-                {
-                    Install(archivePath, backupPath);
-                }
-                else
-                {
-                    Uninstall(archivePath, backupPath);
-                }
-            }
-            catch (Exception ex)
-            {
-                Error(TF("installer.terminal.error", ex.Message));
-            }
-
-            Pause("installer.terminal.prompt.pause");
+            _gameLanguage = DetectGameLanguageFromArchive(archivePath);
+            LoadGameLocale(_gameLanguage);
         }
-    }
-
-    private static string GetInstallState(string backupPath)
-    {
-        return File.Exists(backupPath) ? T("installer.terminal.status.patch.installed") : T("installer.terminal.status.patch.uninstalled");
-    }
-
-    private static string? ReadMenuChoice()
-    {
-        if (Console.IsInputRedirected)
+        catch (Exception ex)
         {
-            return Console.ReadLine()?.Trim();
+            return new GameInspection(
+                false, _gameName, _isSteam ? "Steam" : "DLsite", "", "",
+                TF("installer.gui.error", ex.Message));
         }
 
-        char choice = Console.ReadKey(true).KeyChar;
-
-        Console.WriteLine(choice);
-        return choice.ToString();
+        return new GameInspection(
+            true,
+            _gameName,
+            _isSteam ? "Steam" : "DLsite",
+            LanguageLabel(_gameLanguage),
+            GetInstallState(backupPath),
+            null);
     }
 
-    private static void Pause(string key)
+    private static string DetectGameLanguageFromArchive(string archivePath)
     {
-        if (Console.IsInputRedirected)
+        var archive = Rgss3aArchive.Read(archivePath);
+        var scriptsEntry = archive.Entries.FirstOrDefault(e =>
+            string.Equals(NormalizeName(e.Name), "Data/Scripts.rvdata2", StringComparison.OrdinalIgnoreCase));
+        if (scriptsEntry == null)
         {
-            return;
+            throw new InvalidDataException(T("installer.check.archive"));
         }
 
-        Console.WriteLine();
-        Console.WriteLine(T(key));
-        Console.ReadKey(true);
+        var scripts = ScriptsFile.Read(archive.Extract(archivePath, scriptsEntry));
+        return DetectGameLanguage(scripts);
     }
 
-    private static void Install(string archivePath, string backupPath)
+    private static string LanguageLabel(string language)
     {
+        return language switch
+        {
+            "zh" => "简体中文",
+            "ja" => "日本語",
+            "en" => "English",
+            _ => "—",
+        };
+    }
+
+    internal static string GetInstallState(string backupPath)
+    {
+        return File.Exists(backupPath) ? T("installer.gui.status.installed") : T("installer.gui.status.uninstalled");
+    }
+
+    internal static bool Install(string archivePath, string backupPath)
+    {
+        LastError = null;
         Info(T("installer.install.reading"));
 
         var archive = Rgss3aArchive.Read(archivePath);
@@ -222,13 +194,12 @@ internal static class Program
         if (scriptsEntry == null)
         {
             Error(T("installer.check.archive"));
-            return;
+            return false;
         }
 
         byte[] scriptsData = archive.Extract(archivePath, scriptsEntry);
         var scripts = ScriptsFile.Read(scriptsData);
-        string gameLanguage = DetectGameLanguage(scripts);
-        LoadGameLocale(gameLanguage);
+        LoadGameLocale(_gameLanguage);
 
         int existingIndex = scripts.Entries.FindIndex(e =>
             e.Title.IndexOf(_scriptTitle, StringComparison.OrdinalIgnoreCase) >= 0 ||
@@ -239,7 +210,7 @@ internal static class Program
         if (mainIndex < 0)
         {
             Error(T("installer.check.main"));
-            return;
+            return false;
         }
 
         bool isUpdate = existingIndex >= 0;
@@ -306,16 +277,16 @@ internal static class Program
         AddHighDpiAware(Path.GetDirectoryName(archivePath)!);
 
         Success(T("installer.install.done"));
-        Console.WriteLine();
-        Console.WriteLine(T("installer.install.next"));
+        return true;
     }
 
-    private static void Uninstall(string archivePath, string backupPath)
+    internal static bool Uninstall(string archivePath, string backupPath)
     {
+        LastError = null;
         if (!File.Exists(backupPath))
         {
             Error(TF("installer.uninstall.backup.missing", backupPath));
-            return;
+            return false;
         }
 
         File.Copy(backupPath, archivePath, overwrite: true);
@@ -326,6 +297,7 @@ internal static class Program
         RemoveHighDpiAware(Path.GetDirectoryName(archivePath)!);
 
         Success(T("installer.uninstall.done"));
+        return true;
     }
 
     private static void AddHighDpiAware(string gameDir)
@@ -447,7 +419,8 @@ internal static class Program
             }
         }
 
-        Error(TF("installer.check.ini", "BLACK SOULS / BLACK SOULS II"));
+        _gameLanguage = "";
+        _detectionError = T("installer.gui.no_game") + "\n" + T("installer.gui.no_game_hint");
         return false;
     }
 
@@ -493,7 +466,7 @@ internal static class Program
         return "en";
     }
 
-    private static bool IsGameRunning(string gameDir)
+    internal static bool IsGameRunning(string gameDir)
     {
         string fullDir = Path.GetFullPath(gameDir)
             .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
@@ -520,21 +493,18 @@ internal static class Program
 
     private static string NormalizeName(string name) => name.Replace('\\', '/');
 
-    private static void Info(string message) => Console.WriteLine(message);
+    private static void Info(string message) => StatusSink?.Invoke(message);
 
     private static void Success(string message)
     {
-        Console.ForegroundColor = ConsoleColor.Green;
-        Console.WriteLine(message);
-        Console.ResetColor();
+        LastError = null;
+        StatusSink?.Invoke(message);
     }
 
     private static void Error(string message)
     {
-        Console.Out.Flush();
-        Console.ForegroundColor = ConsoleColor.Red;
-        Console.Error.WriteLine(message);
-        Console.ResetColor();
+        LastError = message;
+        ErrorSink?.Invoke(message);
     }
 }
 
