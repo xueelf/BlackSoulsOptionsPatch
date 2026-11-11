@@ -7,7 +7,7 @@ Read this in other languages: English | [中文](./README.zh.md) | [日本語](.
 ## Features
 
 - Single exe: automatically detects BLACK SOULS or BLACK SOULS II and the game language.
-- Options screen: adds an "Options" entry to the title screen and pause menu. The screen is modeled after the default Options screen in RPG Maker MZ.
+- Options screen: adds menu entries to the title screen and pause menu. The screen is modeled after the default Options screen in RPG Maker MZ.
 - Window resolution: supports 640×480, 1280×960, 1920×1440, and 2560×1920.
 - Borderless fullscreen: fullscreen stretches the game's original 4:3 image to the screen aspect ratio.
 - Volume controls: independent BGM, BGS, ME, and SE volume controls.

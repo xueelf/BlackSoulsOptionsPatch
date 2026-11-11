@@ -20,6 +20,7 @@ internal static class Program
     private const string CompatLayersKey = @"Software\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers";
     private static readonly string Version = GetVersion();
     private static int _gameGeneration;
+    private static bool _isSteam;
     private static string _gameName = "";
     private static string _scriptTitle = "";
     private static string _legacyScriptTitle = "";
@@ -73,15 +74,14 @@ internal static class Program
         LoadJsonResource($"locale.installer.{language}.json", _installerText);
     }
 
-    private static void LoadGameLocale(int generation, string language)
+    private static void LoadGameLocale(string language)
     {
         LoadJsonResource($"locale.game.{language}.json", _gameText);
 
-        // BLACK SOULS II uses OPTIONS on the title screen in Chinese.
-        if (generation == 2 && language == "zh")
-        {
-            _gameText["game.options.label.title"] = "OPTIONS";
-        }
+        string version = _gameGeneration == 1 ? "i" : "ii";
+        string store = _isSteam ? "steam" : "dlsite";
+        _gameText["game.options.label.title"] =
+            _gameText[$"game.options.label.title.{version}.{store}"];
     }
 
     private static int Main()
@@ -228,7 +228,7 @@ internal static class Program
         byte[] scriptsData = archive.Extract(archivePath, scriptsEntry);
         var scripts = ScriptsFile.Read(scriptsData);
         string gameLanguage = DetectGameLanguage(scripts);
-        LoadGameLocale(_gameGeneration, gameLanguage);
+        LoadGameLocale(gameLanguage);
 
         int existingIndex = scripts.Entries.FindIndex(e =>
             e.Title.IndexOf(_scriptTitle, StringComparison.OrdinalIgnoreCase) >= 0 ||
@@ -393,7 +393,9 @@ internal static class Program
 
         builder.AppendLine("module BSOPTS");
         builder.AppendLine("  TEXT = {");
-        foreach (var pair in _gameText.Where(pair => pair.Key.StartsWith("game.", StringComparison.Ordinal)))
+        foreach (var pair in _gameText.Where(pair =>
+                     pair.Key.StartsWith("game.", StringComparison.Ordinal) &&
+                     !pair.Key.StartsWith("game.options.label.title.", StringComparison.Ordinal)))
         {
             builder.Append("    \"")
                 .Append(pair.Key["game.".Length..])
@@ -415,6 +417,8 @@ internal static class Program
 
     private static bool DetectGame(string gameDir)
     {
+        _isSteam = File.Exists(Path.Combine(gameDir, "steam_api.dll"));
+
         string ini = Path.Combine(gameDir, "Game.ini");
         string? titleLine = File.Exists(ini)
             ? Encoding.Latin1.GetString(File.ReadAllBytes(ini))
