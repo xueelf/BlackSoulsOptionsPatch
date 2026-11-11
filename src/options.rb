@@ -109,7 +109,7 @@ module BSOPTS
     end
 
     def config_path
-      File.join(Dir.pwd, "Options.ini")
+      "Options.ini"
     end
 
     def clamp_volume(value)
