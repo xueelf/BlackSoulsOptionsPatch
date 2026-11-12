@@ -7,7 +7,7 @@ namespace OptionsPatch;
 internal sealed class InstallerForm : Form
 {
     private const string BlogUrl = "https://blog.yuki.sh";
-    private const string RepositoryUrl = "https://github.com/xueelf/BlackSoulsOptionsPatch";
+    private const string RepositoryUrl = "https://github.com/xueelf/BlackSoulsQoLPatch";
 
     private readonly string _gameDir = AppContext.BaseDirectory;
     private readonly string _archivePath;
@@ -61,17 +61,25 @@ internal sealed class InstallerForm : Form
             Margin = Padding.Empty,
             Padding = Padding.Empty,
         };
-        info.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 56F));
+        string[] captions =
+        {
+            Program.T("installer.gui.game"),
+            Program.T("installer.gui.platform"),
+            Program.T("installer.gui.language"),
+            Program.T("installer.gui.status"),
+        };
+        int captionWidth = captions.Max(caption => TextRenderer.MeasureText(caption, Font).Width) + 4;
+        info.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, captionWidth));
         info.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
         for (int i = 0; i < 4; i++)
         {
             info.RowStyles.Add(new RowStyle(SizeType.Absolute, 22F));
         }
 
-        _gameValue = AddInfoRow(info, 0, Program.T("installer.gui.game"));
-        _platformValue = AddInfoRow(info, 1, Program.T("installer.gui.platform"));
-        _languageValue = AddInfoRow(info, 2, Program.T("installer.gui.language"));
-        _statusValue = AddInfoRow(info, 3, Program.T("installer.gui.status"));
+        _gameValue = AddInfoRow(info, 0, captions[0]);
+        _platformValue = AddInfoRow(info, 1, captions[1]);
+        _languageValue = AddInfoRow(info, 2, captions[2]);
+        _statusValue = AddInfoRow(info, 3, captions[3]);
         Controls.Add(info);
 
         _installButton = new Button

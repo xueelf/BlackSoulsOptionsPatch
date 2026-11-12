@@ -3,6 +3,7 @@ using System.Globalization;
 using System.IO.Compression;
 using System.Reflection;
 using System.Runtime.Versioning;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -108,7 +109,41 @@ internal static class Program
         Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
-        Application.Run(new InstallerForm());
+
+        string gameDir = Path.GetFullPath(AppContext.BaseDirectory)
+            .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        string mutexName = "Local\\BlackSoulsQoLPatch_" + Convert.ToHexString(
+            SHA256.HashData(Encoding.UTF8.GetBytes(gameDir.ToUpperInvariant())));
+        using var mutex = new Mutex(false, mutexName);
+
+        bool acquired;
+        try
+        {
+            acquired = mutex.WaitOne(0);
+        }
+        catch (AbandonedMutexException)
+        {
+            acquired = true;
+        }
+
+        if (!acquired)
+        {
+            MessageBox.Show(
+                T("installer.gui.already_running"),
+                ProductName,
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+            return;
+        }
+
+        try
+        {
+            Application.Run(new InstallerForm());
+        }
+        finally
+        {
+            mutex.ReleaseMutex();
+        }
     }
 
     internal sealed record GameInspection(

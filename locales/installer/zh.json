@@ -5,6 +5,7 @@
   "installer.gui.action.install": "安装 / 更新",
   "installer.gui.action.reinstall": "重新安装 / 更新",
   "installer.gui.action.uninstall": "卸载",
+  "installer.gui.already_running": "程序已在运行中。",
   "installer.gui.busy": "正在处理中，请稍候。",
   "installer.gui.error": "发生错误：{0}",
   "installer.gui.game": "游戏",

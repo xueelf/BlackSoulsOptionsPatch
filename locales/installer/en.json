@@ -5,6 +5,7 @@
   "installer.gui.action.install": "Install / Update",
   "installer.gui.action.reinstall": "Reinstall / Update",
   "installer.gui.action.uninstall": "Uninstall",
+  "installer.gui.already_running": "The program is already running.",
   "installer.gui.busy": "An operation is in progress. Please wait.",
   "installer.gui.error": "Error: {0}",
   "installer.gui.game": "Game",

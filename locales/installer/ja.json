@@ -5,6 +5,7 @@
   "installer.gui.action.install": "インストール / 更新",
   "installer.gui.action.reinstall": "再インストール / 更新",
   "installer.gui.action.uninstall": "アンインストール",
+  "installer.gui.already_running": "プログラムはすでに実行中です。",
   "installer.gui.busy": "処理中です。しばらくお待ちください。",
   "installer.gui.error": "エラーが発生しました：{0}",
   "installer.gui.game": "ゲーム",
