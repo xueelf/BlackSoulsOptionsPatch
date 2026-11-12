@@ -932,22 +932,29 @@ internal sealed class MarshalReader
             return 0;
         }
 
-        if (first > 0 && first < 5)
-        {
-            return ReadLittleEndian(first);
-        }
-
-        if (first < 0 && first > -5)
-        {
-            return ~ReadLittleEndian(-first);
-        }
-
         if (first > 4)
         {
             return first - 5;
         }
 
-        return first + 5;
+        if (first > 0)
+        {
+            return ReadLittleEndian(first);
+        }
+
+        if (first < -4)
+        {
+            return first + 5;
+        }
+
+        // The negative length prefix supplies the sign, so fill the high bits with ones.
+        int count = -first;
+        int value = ReadLittleEndian(count);
+        if (count < 4)
+        {
+            value |= -1 << (8 * count);
+        }
+        return value;
     }
 
     private int ReadLittleEndian(int count)
@@ -1051,37 +1058,32 @@ internal static class MarshalWriter
             return new byte[] { 0 };
         }
 
-        if (value > 0)
+        if (value > 0 && value < 123)
         {
-            if (value < 123)
-            {
-                return new[] { (byte)(value + 5) };
-            }
-
-            return EncodeLittleEndian(value, false);
+            return new[] { (byte)(value + 5) };
         }
 
-        if (value > -124)
+        if (value < 0 && value > -124)
         {
             return new[] { unchecked((byte)(value - 5)) };
         }
 
-        return EncodeLittleEndian(value, true);
-    }
+        // Stop once the remaining bits are all zero (positive) or all ones (negative).
+        bool negative = value < 0;
+        int remaining = value;
+        int length = 0;
 
-    private static byte[] EncodeLittleEndian(int value, bool negative)
-    {
-        uint bits = negative ? (uint)~value : (uint)value;
-        int length = 1;
-
-        while (length < 4 && (bits >> (8 * length)) != 0)
+        do
         {
             length++;
+            remaining >>= 8;
         }
+        while (remaining != 0 && remaining != -1);
 
-        var result = new byte[1 + length];
+        var result = new byte[length + 1];
         result[0] = unchecked((byte)(negative ? -length : length));
 
+        uint bits = unchecked((uint)value);
         for (int i = 0; i < length; i++)
         {
             result[1 + i] = (byte)(bits >> (8 * i));
