@@ -762,10 +762,24 @@ class Window_ActorCommand
   alias_method :bs_options_make_command_list, :make_command_list
   def make_command_list
     bs_options_make_command_list
-    if @actor
-      add_command([BSOPTS::TEXT["battle.log"], 0], :battle_log)
-      set_position if BattleCommand_Custom::ACTOR_MODE >= 2
-    end
+    return unless @actor
+
+    add_command([BSOPTS::TEXT["battle.log"], 0], :battle_log)
+
+    # Place the log command before escape.
+    log_command = @list.pop
+    escape_index = @list.index { |command| command[:symbol] == :escape }
+    @list.insert(escape_index || @list.length, log_command)
+    set_position if BattleCommand_Custom::ACTOR_MODE >= 2
+  end
+
+  # Keep late-added commands, such as weapon change, on later pages.
+  def custom_visible_line_number
+    boundary = @list.index { |command| command[:symbol] == :escape }
+    count = boundary ? boundary + 1 : @list.size
+    rows = count / col_max + (count % col_max > 0 ? 1 : 0)
+    rows = [BattleCommand_Custom::ACTOR_ROW[0], rows].max
+    [BattleCommand_Custom::ACTOR_ROW[1], rows].min
   end
 
   def cursor_down(wrap = false)
