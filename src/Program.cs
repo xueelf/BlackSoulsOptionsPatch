@@ -14,6 +14,7 @@ namespace OptionsPatch;
 [SupportedOSPlatform("windows")]
 internal static class Program
 {
+    internal const string ProductName = "BLACK SOULS QoL Patch";
     private const string GameTitle = "BLACK SOULS";
     internal const string BackupSuffix = ".bsopts.bak";
     private const string TempSuffix = ".bsopts.tmp";
@@ -100,7 +101,7 @@ internal static class Program
         }
         catch (Exception ex)
         {
-            MessageBox.Show(ex.Message, "BLACK SOULS QoL Patch", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            MessageBox.Show(ex.Message, ProductName, MessageBoxButtons.OK, MessageBoxIcon.Error);
             return;
         }
 
@@ -115,21 +116,20 @@ internal static class Program
         string Name,
         string Platform,
         string Language,
-        string Status,
         string? Error);
 
-    internal static GameInspection InspectGame(string gameDir, string archivePath, string backupPath)
+    internal static GameInspection InspectGame(string gameDir, string archivePath)
     {
         if (!File.Exists(Path.Combine(gameDir, "Game.exe")) || !File.Exists(archivePath))
         {
             return new GameInspection(
-                false, "", "", "", "",
+                false, "", "", "",
                 T("installer.gui.no_game") + "\n" + T("installer.gui.no_game_hint"));
         }
 
         if (!DetectGame(gameDir))
         {
-            return new GameInspection(false, "", "", "", "", _detectionError);
+            return new GameInspection(false, "", "", "", _detectionError);
         }
 
         try
@@ -140,7 +140,7 @@ internal static class Program
         catch (Exception ex)
         {
             return new GameInspection(
-                false, _gameName, _isSteam ? "Steam" : "DLsite", "", "",
+                false, _gameName, _isSteam ? "Steam" : "DLsite", "",
                 TF("installer.gui.error", ex.Message));
         }
 
@@ -149,7 +149,6 @@ internal static class Program
             _gameName,
             _isSteam ? "Steam" : "DLsite",
             LanguageLabel(_gameLanguage),
-            GetInstallState(backupPath),
             null);
     }
 
@@ -178,11 +177,6 @@ internal static class Program
         };
     }
 
-    internal static string GetInstallState(string backupPath)
-    {
-        return File.Exists(backupPath) ? T("installer.gui.status.installed") : T("installer.gui.status.uninstalled");
-    }
-
     internal static bool Install(string archivePath, string backupPath)
     {
         LastError = null;
@@ -199,7 +193,6 @@ internal static class Program
 
         byte[] scriptsData = archive.Extract(archivePath, scriptsEntry);
         var scripts = ScriptsFile.Read(scriptsData);
-        LoadGameLocale(_gameLanguage);
 
         int existingIndex = scripts.Entries.FindIndex(e =>
             e.Title.IndexOf(_scriptTitle, StringComparison.OrdinalIgnoreCase) >= 0 ||

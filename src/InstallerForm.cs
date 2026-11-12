@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Drawing;
 using System.Windows.Forms;
 
@@ -20,6 +20,8 @@ internal sealed class InstallerForm : Form
     private readonly Button _uninstallButton;
     private readonly Label _message;
     private readonly ProgressBar _progress;
+    private readonly Font _footerFont;
+    private readonly Image _coverImage;
     private readonly bool _detected;
     private bool _busy;
 
@@ -28,7 +30,7 @@ internal sealed class InstallerForm : Form
         _archivePath = Path.Combine(_gameDir, "Game.rgss3a");
         _backupPath = _archivePath + Program.BackupSuffix;
 
-        Text = "BLACK SOULS QoL Patch";
+        Text = Program.ProductName;
         Icon = System.Drawing.Icon.ExtractAssociatedIcon(Application.ExecutablePath);
         FormBorderStyle = FormBorderStyle.FixedDialog;
         MaximizeBox = false;
@@ -39,13 +41,14 @@ internal sealed class InstallerForm : Form
         ClientSize = new Size(420, 626);
         Font = SystemFonts.MessageBoxFont;
 
+        _coverImage = LoadCover();
         var cover = new PictureBox
         {
             Location = new Point(16, 12),
             Size = new Size(388, 291),
             SizeMode = PictureBoxSizeMode.Zoom,
             BorderStyle = BorderStyle.FixedSingle,
-            Image = LoadCover(),
+            Image = _coverImage,
         };
         Controls.Add(cover);
 
@@ -111,12 +114,12 @@ internal sealed class InstallerForm : Form
         };
         Controls.Add(_progress);
 
-        var footerFont = new Font(Font.FontFamily, 7.5F);
+        _footerFont = new Font(Font.FontFamily, 7.5F);
         var authorLink = new LinkLabel
         {
             Text = "Copyright © 2026 Yuki",
             AutoSize = true,
-            Font = footerFont,
+            Font = _footerFont,
             LinkBehavior = LinkBehavior.AlwaysUnderline,
             Location = new Point(16, 594),
         };
@@ -130,23 +133,22 @@ internal sealed class InstallerForm : Form
         {
             Text = versionText,
             AutoSize = true,
-            Font = footerFont,
+            Font = _footerFont,
             LinkBehavior = LinkBehavior.AlwaysUnderline,
         };
         versionLink.Location = new Point(
-            16 + 388 - TextRenderer.MeasureText(versionText, footerFont).Width,
+            16 + 388 - TextRenderer.MeasureText(versionText, _footerFont).Width,
             594);
         versionLink.LinkClicked += (_, _) => OpenUrl(RepositoryUrl);
         Controls.Add(versionLink);
 
-        var inspection = Program.InspectGame(_gameDir, _archivePath, _backupPath);
+        var inspection = Program.InspectGame(_gameDir, _archivePath);
         _detected = inspection.Detected;
         if (_detected)
         {
             _gameValue.Text = inspection.Name;
             _platformValue.Text = inspection.Platform;
             _languageValue.Text = inspection.Language;
-            _statusValue.Text = inspection.Status;
             UpdateState();
             _message.Text = Program.T("installer.gui.ready");
         }
@@ -161,8 +163,7 @@ internal sealed class InstallerForm : Form
             _installButton.Enabled = false;
             _uninstallButton.Enabled = false;
             _message.ForeColor = Color.Firebrick;
-            _message.Text = inspection.Error
-                ?? Program.T("installer.gui.no_game") + Environment.NewLine + Program.T("installer.gui.no_game_hint");
+            _message.Text = inspection.Error!;
         }
 
         Program.StatusSink = message => RunOnUi(() =>
@@ -291,7 +292,7 @@ internal sealed class InstallerForm : Form
         }
         else
         {
-            ShowError(Program.LastError ?? Program.TF("installer.gui.error", ""));
+            ShowError(Program.LastError!);
         }
     }
 
@@ -342,9 +343,18 @@ internal sealed class InstallerForm : Form
         }
         catch (Exception ex)
         {
-            MessageBox.Show(ex.Message, "BLACK SOULS QoL Patch", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            MessageBox.Show(ex.Message, Program.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
     }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _coverImage.Dispose();
+            _footerFont.Dispose();
+        }
+
+        base.Dispose(disposing);
+    }
 }
-
-
