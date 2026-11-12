@@ -20,7 +20,7 @@
 
 ## ダウンロード
 
-[GitHub Releases](https://github.com/xueelf/BlackSoulsOptionsPatch/releases/latest) から exe をダウンロードしてください：
+[GitHub Releases](https://github.com/xueelf/BlackSoulsQoLPatch/releases/latest) から exe をダウンロードしてください：
 
 - `BlackSoulsQoLPatch.exe`
 

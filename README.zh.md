@@ -20,7 +20,7 @@
 
 ## 下载
 
-从 [GitHub Releases](https://github.com/xueelf/BlackSoulsOptionsPatch/releases/latest) 下载 exe：
+从 [GitHub Releases](https://github.com/xueelf/BlackSoulsQoLPatch/releases/latest) 下载 exe：
 
 - `BlackSoulsQoLPatch.exe`
 

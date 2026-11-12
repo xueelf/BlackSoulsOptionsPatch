@@ -20,7 +20,7 @@ Read this in other languages: English | [中文](./README.zh.md) | [日本語](.
 
 ## Download
 
-Download the exe from [GitHub Releases](https://github.com/xueelf/BlackSoulsOptionsPatch/releases/latest):
+Download the exe from [GitHub Releases](https://github.com/xueelf/BlackSoulsQoLPatch/releases/latest):
 
 - `BlackSoulsQoLPatch.exe`
 
